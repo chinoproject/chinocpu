@@ -1,4 +1,4 @@
-### Hi there 👋
+# Chino CPU的实现 🌱
 
 <!--
 **ChinoCPU/chinocpu** is a ✨ _special_ ✨ repository because its `README.md` (this file) appears on your GitHub profile.
@@ -14,3 +14,12 @@ Here are some ideas to get you started:
 - 😄 Pronouns: ...
 - ⚡ Fun fact: ...
 -->
+
+## 目录结构
+docs/&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Chino&nbsp;ISA说明<br>
+src/&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Chino&nbsp;CPU源码<br>
+asm_src/&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;测试CPU的汇编文件
+
+## 参考资料
+《CPU自制入门》<br>
+《自己动手写CPU》<br>
