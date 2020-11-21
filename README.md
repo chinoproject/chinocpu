@@ -20,6 +20,8 @@ docs/&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Chino&nbs
 src/&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Chino&nbsp;CPU源码<br>
 asm_src/&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;测试CPU的汇编文件
 
+## 编译汇编代码
+&nbsp;&nbsp;[ChinoCPU汇编器](https://github.com/ChinoCPU/Chino_assembler)
 ## 参考资料
 《CPU自制入门》<br>
 《自己动手写CPU》<br>
