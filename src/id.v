@@ -87,7 +87,15 @@ module id(
 							aluop_o <= `EXE_XOR_OP;
 							alusel_o <= `EXE_RES_LOGIC;
 							instvalid <= `InstValid;
-						end					 
+						end
+						`EXE_NOT:begin
+							wreg_o <= `WriteEnable;
+							aluop_o <= `EXE_NOT_OP;
+							alusel_o <= `EXE_RES_LOGIC;
+							instvalid <= `InstValid;
+							imm <= inst_i[46:16];
+							reg1_read_o <= 1'b0;
+						end				 
 						default:begin
 						end
 					endcase
@@ -113,6 +121,13 @@ module id(
 							aluop_o <= `EXE_XOR_OP;
 							alusel_o <= `EXE_RES_LOGIC;
 							instvalid <= `InstValid;
+						end
+						`EXE_NOT:begin
+							wreg_o <= `WriteEnable;
+							aluop_o <= `EXE_NOT_OP;
+							alusel_o <= `EXE_RES_LOGIC;
+							instvalid <= `InstValid;
+							reg2_read_o <= 1'b0;
 						end
 						default:begin
 						end
