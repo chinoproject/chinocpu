@@ -2,26 +2,36 @@
 
 module id(
 
-	input wire					  rst,
-	input wire[`InstAddrBus]	  pc_i,
-	input wire[`InstBus]          inst_i,
+	input wire					  	rst,
+	input wire[`InstAddrBus]	  	pc_i,
+	input wire[`InstBus]          	inst_i,
 
-	input wire[`RegBus]           reg1_data_i,
-	input wire[`RegBus]           reg2_data_i,
+	input wire[`RegBus]           	reg1_data_i,
+	input wire[`RegBus]           	reg2_data_i,
+
+	//从mem阶段送来的信息，数据前推，解决数据冲突
+	input wire[`RegBus]				mem_wdata_i,
+	input wire[`RegAddrBus]			mem_wd_i,
+	input wire						mem_wreg_i,
+
+	//从ex阶段送来的信息，数据前推，解决数据冲突
+	input wire[`RegBus]				ex_wdata_i,
+	input wire[`RegAddrBus]			ex_wd_i,
+	input wire						ex_wreg_i,
 
 	//送到regfile的信息
-	output reg                    reg1_read_o,
-	output reg                    reg2_read_o,     
-	output reg[`RegAddrBus]       reg1_addr_o,
-	output reg[`RegAddrBus]       reg2_addr_o, 	      
+	output reg                    	reg1_read_o,
+	output reg                    	reg2_read_o,     
+	output reg[`RegAddrBus]       	reg1_addr_o,
+	output reg[`RegAddrBus]       	reg2_addr_o, 	      
 	
 	//送到执行阶段的信息
-	output reg[`AluOpBus]         aluop_o,
-	output reg[`AluSelBus]        alusel_o,
-	output reg[`RegBus]           reg1_o,
-	output reg[`RegBus]           reg2_o,
-	output reg[`RegAddrBus]       wd_o,
-	output reg                    wreg_o
+	output reg[`AluOpBus]         	aluop_o,
+	output reg[`AluSelBus]        	alusel_o,
+	output reg[`RegBus]           	reg1_o,
+	output reg[`RegBus]           	reg2_o,
+	output reg[`RegAddrBus]       	wd_o,
+	output reg                    	wreg_o
 );
 
   wire[3:0]	mem = inst_i[63:60];	//访存类型
@@ -94,27 +104,37 @@ module id(
 	
 
 	always @ (*) begin
-		if(rst == `RstEnable) begin
+		if(rst == `RstEnable)
 			reg1_o <= `ZeroWord;
-	  end else if(reg1_read_o == 1'b1) begin
-	  	reg1_o <= reg1_data_i;
-	  end else if(reg1_read_o == 1'b0) begin
-	  	reg1_o <= imm;
-	  end else begin
-	    reg1_o <= `ZeroWord;
-	  end
+		else if ((reg1_addr_o == 1'b1) && (ex_wreg_i == 1'b1)
+					&& (ex_wd_i == reg1_addr_o))
+			reg1_o <= ex_wdata_i;
+		else if ((reg1_addr_o) == 1'b1 && (mem_wreg_i == 1'b1)
+					&& (mem_wdata_i == reg1_addr_o))
+			reg1_o <= mem_wdata_i;
+	  	else if(reg1_read_o == 1'b1)
+	  		reg1_o <= reg1_data_i;
+	  	else if(reg1_read_o == 1'b0)
+	  		reg1_o <= imm;
+	  	else
+	    	reg1_o <= `ZeroWord;
 	end
 	
 	always @ (*) begin
-		if(rst == `RstEnable) begin
+		if(rst == `RstEnable)
 			reg2_o <= `ZeroWord;
-	  end else if(reg2_read_o == 1'b1) begin
-	  	reg2_o <= reg2_data_i;
-	  end else if(reg2_read_o == 1'b0) begin
-	  	reg2_o <= imm;
-	  end else begin
-	    reg2_o <= `ZeroWord;
-	  end
-	end
+		else if ((reg2_addr_o == 1'b1) && (ex_wreg_i == 1'b1)
+					&& (ex_wdata_i == reg2_addr_o))
+			reg2_o <= ex_wdata_i;
+		else if ((reg2_addr_o == 1'b1) && (mem_wreg_i == 1'b1)
+					&& (mem_wdata_i == reg2_addr_o))
+			reg2_o <= mem_wdata_i;
+		else if(reg2_read_o == 1'b1)
+			reg2_o <= reg2_data_i;
+		else if(reg2_read_o == 1'b0)
+			reg2_o <= imm;
+		else
+			reg2_o <= `ZeroWord;
+		end
 
 endmodule

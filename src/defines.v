@@ -27,8 +27,8 @@
 `define ZeroDoubleWord 64'h0
 
 //访问类型
-`define MEM_SREG    4'b0010 //访问一个寄存器
-`define MEM_DREG    4'b0001 //访问两个寄存器
+`define MEM_SREG    4'b0010 //读一个寄存器
+`define MEM_DREG    4'b0001 //读两个寄存器
 
 //指令
 `define EXE_OR  8'b00000001
