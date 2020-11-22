@@ -15,7 +15,7 @@ module chino_min_sopc_tb();
   initial begin
     rst = `RstEnable;
     #200 rst= `RstDisable;
-    #1000 $stop;
+    #5000 $stop;
   end
        
   chino_min_sopc chino_min_sopc0(

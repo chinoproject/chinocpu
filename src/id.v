@@ -71,11 +71,21 @@ module id(
 						end
 					endcase
 				end
-				/*`MEM_SREG:begin
+				`MEM_DREG:begin
 					case(op)
 						`EXE_OR:begin
+							wreg_o <= `WriteEnable;
+							aluop_o <= `EXE_OR_OP;
+							alusel_o <= `EXE_RES_LOGIC;
+							reg1_read_o <= 1'b1;
+							reg2_read_o <= 1'b1;
+							imm <= `ZeroWord;
+							instvalid <= `InstInvalid;
 						end
-				end*/
+						default:begin
+						end
+					endcase
+				end
 				default:begin
 				end
 			endcase
