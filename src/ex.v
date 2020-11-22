@@ -27,6 +27,7 @@ module ex(
 			case (aluop_i)
 				`EXE_OR_OP:logicout <= reg1_i | reg2_i;
 				`EXE_AND_OP:logicout <= reg1_i & reg2_i;
+				`EXE_XOR_OP:logicout <= reg1_i ^ reg2_i;
 				default:logicout <= `ZeroWord;
 			endcase
 		end    //if

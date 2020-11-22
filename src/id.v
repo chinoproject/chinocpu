@@ -68,23 +68,26 @@ module id(
 				`MEM_SREG:begin
 					reg1_read_o <= 1'b1;
 					reg2_read_o <= 1'b0;
+					imm <= inst_i[41:10];
 					case (op)
 						`EXE_OR:begin//OR指令
 							wreg_o <= `WriteEnable;
 							aluop_o <= `EXE_OR_OP;
 							alusel_o <= `EXE_RES_LOGIC;
-							imm <= inst_i[41:10];
-							wd_o <= inst_i[51:47];
 							instvalid <= `InstValid;
 						end
 						`EXE_AND:begin
 							wreg_o <= `WriteEnable;
 							aluop_o <= `EXE_AND_OP;
 							alusel_o <= `EXE_RES_LOGIC;
-							imm <= inst_i[41:10];
-							wd_o <= inst_i[51:47];
 							instvalid <= `InstValid;
-						end							 
+						end
+						`EXE_XOR:begin
+							wreg_o <= `WriteEnable;
+							aluop_o <= `EXE_XOR_OP;
+							alusel_o <= `EXE_RES_LOGIC;
+							instvalid <= `InstValid;
+						end					 
 						default:begin
 						end
 					endcase
@@ -97,13 +100,19 @@ module id(
 							wreg_o <= `WriteEnable;
 							aluop_o <= `EXE_OR_OP;
 							alusel_o <= `EXE_RES_LOGIC;
-							instvalid <= `InstInvalid;
+							instvalid <= `InstValid;
 						end
 						`EXE_AND:begin
 							wreg_o <= `WriteEnable;
 							aluop_o <= `EXE_AND_OP;
 							alusel_o <= `EXE_RES_LOGIC;
-							instvalid <= `InstInvalid;
+							instvalid <= `InstValid;
+						end
+						`EXE_XOR:begin
+							wreg_o <= `WriteEnable;
+							aluop_o <= `EXE_XOR_OP;
+							alusel_o <= `EXE_RES_LOGIC;
+							instvalid <= `InstValid;
 						end
 						default:begin
 						end

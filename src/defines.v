@@ -31,14 +31,16 @@
 `define MEM_DREG    4'b0001 //读两个寄存器
 
 //指令
-`define EXE_OR  8'b00000001
 `define EXE_NOP 8'b00000000
+`define EXE_OR  8'b00000001
 `define EXE_AND 8'b00000010
+`define EXE_XOR 8'b00000011
 
 //AluOp
+`define EXE_NOP_OP      8'b0000_0000
 `define EXE_OR_OP       8'b0000_0001
-`define EXE_NOP_OP      8'b000_00000
 `define EXE_AND_OP      8'b0000_0010
+`define EXE_XOR_OP      8'b0000_0011
 
 //AluSel
 `define EXE_RES_LOGIC 3'b001
