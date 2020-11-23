@@ -36,6 +36,8 @@
 `define EXE_AND 8'b00000010
 `define EXE_XOR 8'b00000011
 `define EXE_NOT 8'b00000100
+`define EXE_SHL 8'b00000101
+`define EXE_SHR 8'b00000110
 
 //AluOp
 `define EXE_NOP_OP      8'b0000_0000
@@ -43,10 +45,12 @@
 `define EXE_AND_OP      8'b0000_0010
 `define EXE_XOR_OP      8'b0000_0011
 `define EXE_NOT_OP      8'b0000_0100
+`define EXE_SHL_OP      8'b0000_0101
+`define EXE_SHR_OP      8'b0000_0110
 
 //AluSel
 `define EXE_RES_LOGIC 3'b001
-
+`define EXE_RES_SHIFT 3'b010
 `define EXE_RES_NOP 3'b000
 
 

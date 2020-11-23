@@ -69,33 +69,42 @@ module id(
 					reg1_read_o <= 1'b1;
 					reg2_read_o <= 1'b0;
 					imm <= inst_i[41:10];
+					wreg_o <= `WriteEnable;
 					case (op)
-						`EXE_OR:begin//OR指令
-							wreg_o <= `WriteEnable;
+						`EXE_OR:begin	//OR指令
 							aluop_o <= `EXE_OR_OP;
 							alusel_o <= `EXE_RES_LOGIC;
 							instvalid <= `InstValid;
 						end
-						`EXE_AND:begin
-							wreg_o <= `WriteEnable;
+						`EXE_AND:begin	//AND指令
 							aluop_o <= `EXE_AND_OP;
 							alusel_o <= `EXE_RES_LOGIC;
 							instvalid <= `InstValid;
 						end
-						`EXE_XOR:begin
-							wreg_o <= `WriteEnable;
+						`EXE_XOR:begin	//XOR指令
 							aluop_o <= `EXE_XOR_OP;
 							alusel_o <= `EXE_RES_LOGIC;
 							instvalid <= `InstValid;
 						end
-						`EXE_NOT:begin
-							wreg_o <= `WriteEnable;
+						`EXE_NOT:begin	//NOT指令
 							aluop_o <= `EXE_NOT_OP;
 							alusel_o <= `EXE_RES_LOGIC;
 							instvalid <= `InstValid;
 							imm <= inst_i[46:16];
 							reg1_read_o <= 1'b0;
-						end				 
+						end
+						`EXE_SHL:begin
+							aluop_o <= `EXE_SHL_OP;
+							alusel_o <= `EXE_RES_SHIFT;
+							instvalid <= `InstValid;
+							imm <= inst_i[41:37];
+						end
+						`EXE_SHR:begin
+							aluop_o <= `EXE_SHR_OP;
+							alusel_o <= `EXE_RES_SHIFT;
+							instvalid <= `InstValid;
+							imm <= inst_i[41:37];
+						end			 
 						default:begin
 						end
 					endcase
@@ -103,31 +112,39 @@ module id(
 				`MEM_DREG:begin
 					reg1_read_o <= 1'b1;
 					reg2_read_o <= 1'b1;
+					wreg_o <= `WriteEnable;
+
 					case(op)
 						`EXE_OR:begin
-							wreg_o <= `WriteEnable;
 							aluop_o <= `EXE_OR_OP;
 							alusel_o <= `EXE_RES_LOGIC;
 							instvalid <= `InstValid;
 						end
 						`EXE_AND:begin
-							wreg_o <= `WriteEnable;
 							aluop_o <= `EXE_AND_OP;
 							alusel_o <= `EXE_RES_LOGIC;
 							instvalid <= `InstValid;
 						end
 						`EXE_XOR:begin
-							wreg_o <= `WriteEnable;
 							aluop_o <= `EXE_XOR_OP;
 							alusel_o <= `EXE_RES_LOGIC;
 							instvalid <= `InstValid;
 						end
 						`EXE_NOT:begin
-							wreg_o <= `WriteEnable;
 							aluop_o <= `EXE_NOT_OP;
 							alusel_o <= `EXE_RES_LOGIC;
 							instvalid <= `InstValid;
 							reg2_read_o <= 1'b0;
+						end
+						`EXE_SHL:begin
+							aluop_o <= `EXE_SHL_OP;
+							alusel_o <= `EXE_RES_SHIFT;
+							instvalid <= `InstValid;
+						end
+						`EXE_SHR:begin
+							aluop_o <= `EXE_SHR_OP;
+							alusel_o <= `EXE_RES_SHIFT;
+							instvalid <= `InstValid;
 						end
 						default:begin
 						end

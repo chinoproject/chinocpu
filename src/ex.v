@@ -20,6 +20,7 @@ module ex(
 );
 
 	reg[`RegBus] logicout;
+	reg[`RegBus] shiftout;
 	always @ (*) begin
 		if(rst == `RstEnable) begin
 			logicout <= `ZeroWord;
@@ -29,6 +30,8 @@ module ex(
 				`EXE_AND_OP:logicout <= reg1_i & reg2_i;
 				`EXE_XOR_OP:logicout <= reg1_i ^ reg2_i;
 				`EXE_NOT_OP:logicout <= ~reg1_i;
+				`EXE_SHL_OP:shiftout <= reg1_i << reg2_i[4:0];
+				`EXE_SHR_OP:shiftout <= reg1_i >> reg2_i[4:0];
 				default:logicout <= `ZeroWord;
 			endcase
 		end    //if
@@ -40,7 +43,7 @@ module ex(
 	 wreg_o <= wreg_i;
 	 case (alusel_i) 
 	 	`EXE_RES_LOGIC:wdata_o <= logicout;
-
+		`EXE_RES_SHIFT:wdata_o <= shiftout;
 	 	default:wdata_o <= `ZeroWord;
 	 endcase
  end	
