@@ -30,13 +30,27 @@ module ex(
 				`EXE_AND_OP:logicout <= reg1_i & reg2_i;
 				`EXE_XOR_OP:logicout <= reg1_i ^ reg2_i;
 				`EXE_NOT_OP:logicout <= ~reg1_i;
-				`EXE_SHL_OP:shiftout <= reg1_i << reg2_i[4:0];
-				`EXE_SHR_OP:shiftout <= reg1_i >> reg2_i[4:0];
 				default:logicout <= `ZeroWord;
 			endcase
 		end    //if
 	end      //always
 
+	always @(*) begin
+		if (rst == `RstEnable) begin
+			shiftout <= `ZeroWord;
+		end else begin
+			case (aluop_i)
+				`EXE_SHL_OP:shiftout <= reg1_i << reg2_i[4:0];
+				`EXE_SHR_OP:shiftout <= reg1_i >> reg2_i[4:0];
+				//算术右移
+				`EXE_SAR_OP:begin
+					shiftout <= ({32{reg1_i[31]}} << (6'd32-{1'b0, reg2_i[4:0]})) 
+								| reg1_i >> reg2_i[4:0];
+				end
+				default:shiftout <= `ZeroWord;
+			endcase
+		end
+	end
 
  always @ (*) begin
 	 wd_o <= wd_i;	 	 	

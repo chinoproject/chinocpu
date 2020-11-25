@@ -97,14 +97,18 @@ module id(
 							aluop_o <= `EXE_SHL_OP;
 							alusel_o <= `EXE_RES_SHIFT;
 							instvalid <= `InstValid;
-							imm <= inst_i[41:37];
 						end
 						`EXE_SHR:begin
 							aluop_o <= `EXE_SHR_OP;
 							alusel_o <= `EXE_RES_SHIFT;
 							instvalid <= `InstValid;
-							imm <= inst_i[41:37];
 						end			 
+						`EXE_SAR:begin
+							aluop_o <= `EXE_SAR_OP;
+							alusel_o <= `EXE_RES_SHIFT;
+							instvalid <= `InstValid;
+							imm <= {27'h0,inst_i[41:37]};
+						end
 						default:begin
 						end
 					endcase
@@ -145,6 +149,12 @@ module id(
 							aluop_o <= `EXE_SHR_OP;
 							alusel_o <= `EXE_RES_SHIFT;
 							instvalid <= `InstValid;
+						end
+						`EXE_SAR:begin
+							aluop_o <= `EXE_SAR_OP;
+							alusel_o <= `EXE_RES_SHIFT;
+							instvalid <= `InstValid;
+							//imm <= inst_i[41:37];
 						end
 						default:begin
 						end
