@@ -69,7 +69,7 @@ module id(
 					reg1_read_o <= 1'b1;
 					reg2_read_o <= 1'b0;
 					imm <= inst_i[41:10];
-					wreg_o <= `WriteEnable;
+					
 					case (op)
 						`EXE_OR:begin	//OR指令
 							aluop_o <= `EXE_OR_OP;
@@ -170,10 +170,10 @@ module id(
 	always @ (*) begin
 		if(rst == `RstEnable)
 			reg1_o <= `ZeroWord;
-		else if ((reg1_addr_o == 1'b1) && (ex_wreg_i == 1'b1)
+		else if ((reg1_read_o == 1'b1) && (ex_wreg_i == 1'b1)
 					&& (ex_wd_i == reg1_addr_o))
 			reg1_o <= ex_wdata_i;
-		else if ((reg1_addr_o) == 1'b1 && (mem_wreg_i == 1'b1)
+		else if ((reg1_read_o == 1'b1) && (mem_wreg_i == 1'b1)
 					&& (mem_wdata_i == reg1_addr_o))
 			reg1_o <= mem_wdata_i;
 	  	else if(reg1_read_o == 1'b1)
@@ -187,10 +187,10 @@ module id(
 	always @ (*) begin
 		if(rst == `RstEnable)
 			reg2_o <= `ZeroWord;
-		else if ((reg2_addr_o == 1'b1) && (ex_wreg_i == 1'b1)
+		else if ((reg2_read_o == 1'b1) && (ex_wreg_i == 1'b1)
 					&& (ex_wdata_i == reg2_addr_o))
 			reg2_o <= ex_wdata_i;
-		else if ((reg2_addr_o == 1'b1) && (mem_wreg_i == 1'b1)
+		else if ((reg2_read_o == 1'b1) && (mem_wreg_i == 1'b1)
 					&& (mem_wdata_i == reg2_addr_o))
 			reg2_o <= mem_wdata_i;
 		else if(reg2_read_o == 1'b1)
