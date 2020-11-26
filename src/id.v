@@ -109,6 +109,32 @@ module id(
 							instvalid <= `InstValid;
 							imm <= {27'h0,inst_i[41:37]};
 						end
+						`EXE_MOV:begin
+							wreg_o <= `WriteEnable;
+							aluop_o <= `EXE_MOV_OP;
+							alusel_o <= `EXE_RES_MOV;
+							instvalid <= `InstValid;
+							imm <= inst_i[46:16];
+							reg1_read_o <= 1'b0;
+						end
+						`EXE_MOVZ:begin
+							aluop_o <= `EXE_MOVZ_OP;
+							alusel_o <= `EXE_RES_MOV;
+							instvalid <= `InstValid;
+							if (reg1_o == `ZeroWord)
+								wreg_o <= `WriteEnable;
+							else
+								wreg_o <= `WriteDisable;
+						end
+						`EXE_MOVN:begin
+							aluop_o <= `EXE_MOVN_OP;
+							alusel_o <= `EXE_RES_MOV;
+							instvalid <= `InstValid;
+							if (reg1_o != `ZeroWord)
+								wreg_o <= `WriteEnable;
+							else
+								wreg_o <= `WriteDisable;
+						end
 						default:begin
 						end
 					endcase
@@ -154,7 +180,31 @@ module id(
 							aluop_o <= `EXE_SAR_OP;
 							alusel_o <= `EXE_RES_SHIFT;
 							instvalid <= `InstValid;
-							//imm <= inst_i[41:37];
+						end
+						`EXE_MOV:begin
+							wreg_o <= `WriteEnable;
+							aluop_o <= `EXE_MOV_OP;
+							alusel_o <= `EXE_RES_MOV;
+							instvalid <= `InstValid;
+							reg2_read_o <= 1'b0;
+						end
+						`EXE_MOVZ:begin
+							aluop_o <= `EXE_MOVZ_OP;
+							alusel_o <= `EXE_RES_MOV;
+							instvalid <= `InstValid;
+							if (reg1_o == `ZeroWord)
+								wreg_o <= `WriteEnable;
+							else
+								wreg_o <= `WriteDisable;
+						end
+						`EXE_MOVN:begin
+							aluop_o <= `EXE_MOVN_OP;
+							alusel_o <= `EXE_RES_MOV;
+							instvalid <= `InstValid;
+							if (reg1_o != `ZeroWord)
+								wreg_o <= `WriteEnable;
+							else
+								wreg_o <= `WriteDisable;
 						end
 						default:begin
 						end

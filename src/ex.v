@@ -4,7 +4,7 @@ module ex(
 
 	input wire						rst,
 	
-	//送到执行阶段的信息
+	//从ID阶段传来的消息
 	input wire[`AluOpBus]         	aluop_i,
 	input wire[`AluSelBus]        	alusel_i,
 	input wire[`RegBus]           	reg1_i,
@@ -12,7 +12,7 @@ module ex(
 	input wire[`RegAddrBus]       	wd_i,
 	input wire                    	wreg_i,
 
-	
+	//输出到MEM阶段的信息
 	output reg[`RegAddrBus]       	wd_o,
 	output reg                    	wreg_o,
 	output reg[`RegBus]				wdata_o
@@ -21,6 +21,8 @@ module ex(
 
 	reg[`RegBus] logicout;
 	reg[`RegBus] shiftout;
+	reg[`RegBus] movout;
+	reg			 we;
 	always @ (*) begin
 		if(rst == `RstEnable) begin
 			logicout <= `ZeroWord;
@@ -52,14 +54,28 @@ module ex(
 		end
 	end
 
+	always @(*) begin
+		if (rst == `RstEnable)
+			movout <= `ZeroWord;
+		else begin
+			case(aluop_i)
+				`EXE_MOV_OP:movout <= reg1_i;
+				`EXE_MOVZ_OP:movout <= reg2_i;
+				`EXE_MOVN_OP:movout <= reg2_i;
+				default:begin
+				end
+			endcase
+		end
+	end
+
  always @ (*) begin
 	 wd_o <= wd_i;	 	 	
 	 wreg_o <= wreg_i;
 	 case (alusel_i) 
 	 	`EXE_RES_LOGIC:wdata_o <= logicout;
 		`EXE_RES_SHIFT:wdata_o <= shiftout;
+		`EXE_RES_MOV:wdata_o <= movout;
 	 	default:wdata_o <= `ZeroWord;
 	 endcase
  end	
-
 endmodule

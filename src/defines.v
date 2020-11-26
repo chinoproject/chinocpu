@@ -31,14 +31,17 @@
 `define MEM_DREG    4'b0001 //读两个寄存器
 
 //指令
-`define EXE_NOP 8'b00000000
-`define EXE_OR  8'b00000001
-`define EXE_AND 8'b00000010
-`define EXE_XOR 8'b00000011
-`define EXE_NOT 8'b00000100
-`define EXE_SHL 8'b00000101
-`define EXE_SHR 8'b00000110
-`define EXE_SAR 8'b00000111
+`define EXE_NOP     8'b00000000
+`define EXE_OR      8'b00000001
+`define EXE_AND     8'b00000010
+`define EXE_XOR     8'b00000011
+`define EXE_NOT     8'b00000100
+`define EXE_SHL     8'b00000101
+`define EXE_SHR     8'b00000110
+`define EXE_SAR     8'b00000111
+`define EXE_MOV     8'b00001000
+`define EXE_MOVZ    8'b00001001
+`define EXE_MOVN    8'b00001010
 
 //AluOp
 `define EXE_NOP_OP      8'b0000_0000
@@ -49,12 +52,15 @@
 `define EXE_SHL_OP      8'b0000_0101
 `define EXE_SHR_OP      8'b0000_0110
 `define EXE_SAR_OP      8'b0000_0111
+`define EXE_MOV_OP      8'b0000_1000
+`define EXE_MOVZ_OP     8'b0000_1001
+`define EXE_MOVN_OP     8'b0000_1010
 
 //AluSel
-`define EXE_RES_LOGIC 3'b001
-`define EXE_RES_SHIFT 3'b010
-`define EXE_RES_NOP 3'b000
-
+`define EXE_RES_NOP     3'b000
+`define EXE_RES_LOGIC   3'b001
+`define EXE_RES_SHIFT   3'b010
+`define EXE_RES_MOV     3'b011
 
 //指令存储器inst_rom
 `define InstAddrBus 31:0
