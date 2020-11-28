@@ -18,21 +18,32 @@ module regfile(
 	//读端口2
 	input wire										re2,
 	input wire[`RegAddrBus]			  				raddr2,
-	output reg[`RegBus]           					rdata2
-	
-);
+	output reg[`RegBus]           					rdata2,
 
-	reg[`RegBus]  regs[0:`RegNum-1];
+	input wire[`RegBus]								hi,
+	input wire[`RegBus]								lo,
+	input wire										mul_we,
+	input wire[`RegBus]								flags_i
+);	
+
+	reg[`RegBus]	regs[0:`RegNum-1];
+	reg[`RegBus]	flags;
 	integer i;
-
 	always @ (posedge clk) begin
 		if (rst == `RstDisable) begin
 			if((we == `WriteEnable) && (waddr != `RegNumLog2'h0)) begin
 				regs[waddr] <= wdata;
 			end
+
+			if (mul_we) begin
+				regs[31] <= hi;
+				regs[30] <= lo;
+			end
+			flags <= flags_i;
 		end else begin
 			for(i = 0;i < 32;i = i + 1)
 				regs[i] = 0;
+			flags <= `ZeroWord;
 		end
 	end
 

@@ -114,7 +114,7 @@ module id(
 							aluop_o <= `EXE_MOV_OP;
 							alusel_o <= `EXE_RES_MOV;
 							instvalid <= `InstValid;
-							imm <= inst_i[46:16];
+							imm <= inst_i[46:15];
 							reg1_read_o <= 1'b0;
 						end
 						`EXE_MOVZ:begin
@@ -134,6 +134,33 @@ module id(
 								wreg_o <= `WriteEnable;
 							else
 								wreg_o <= `WriteDisable;
+						end
+						`EXE_ADD:begin
+							aluop_o <= `EXE_ADD_OP;
+							alusel_o <= `EXE_RES_ARITHMETIC;
+							instvalid <= `InstValid;
+							wreg_o <= `WriteEnable;
+						end
+						`EXE_SUB:begin
+							aluop_o <= `EXE_SUB_OP;
+							alusel_o <= `EXE_RES_ARITHMETIC;
+							instvalid <= `InstValid;
+							wreg_o <= `WriteEnable;
+						end
+						`EXE_MULT:begin
+							aluop_o <= `EXE_MULT_OP;
+							alusel_o <= `EXE_RES_MUL;
+							instvalid <= `InstValid;
+						end
+						`EXE_DIV:begin
+							aluop_o <= `EXE_DIV_OP;
+							alusel_o <= `EXE_RES_MUL;
+							instvalid <= `InstValid;
+						end
+						`EXE_MULTU:begin
+							aluop_o <= `EXE_MULTU_OP;
+							alusel_o <= `EXE_RES_MUL;
+							instvalid <= `InstValid;
 						end
 						default:begin
 						end
@@ -206,6 +233,33 @@ module id(
 							else
 								wreg_o <= `WriteDisable;
 						end
+						`EXE_ADD:begin
+							aluop_o <= `EXE_ADD_OP;
+							alusel_o <= `EXE_RES_ARITHMETIC;
+							instvalid <= `InstValid;
+							//wreg_o <= `WriteEnable;
+						end
+						`EXE_SUB:begin
+							aluop_o <= `EXE_SUB_OP;
+							alusel_o <= `EXE_RES_ARITHMETIC;
+							instvalid <= `InstValid;
+							//wreg_o <= `WriteEnable;	
+						end
+						`EXE_MULT:begin
+							aluop_o <= `EXE_MULT_OP;
+							alusel_o <= `EXE_RES_MUL;
+							instvalid <= `InstValid;
+						end
+						`EXE_DIV:begin
+							aluop_o <= `EXE_DIV_OP;
+							alusel_o <= `EXE_RES_MUL;
+							instvalid <= `InstValid;
+						end
+						`EXE_MULTU:begin
+							aluop_o <= `EXE_MULTU_OP;
+							alusel_o <= `EXE_RES_MUL;
+							instvalid <= `InstValid;
+						end
 						default:begin
 						end
 					endcase
@@ -224,7 +278,7 @@ module id(
 					&& (ex_wd_i == reg1_addr_o))
 			reg1_o <= ex_wdata_i;
 		else if ((reg1_read_o == 1'b1) && (mem_wreg_i == 1'b1)
-					&& (mem_wdata_i == reg1_addr_o))
+					&& (mem_wd_i == reg1_addr_o))
 			reg1_o <= mem_wdata_i;
 	  	else if(reg1_read_o == 1'b1)
 	  		reg1_o <= reg1_data_i;
@@ -238,10 +292,10 @@ module id(
 		if(rst == `RstEnable)
 			reg2_o <= `ZeroWord;
 		else if ((reg2_read_o == 1'b1) && (ex_wreg_i == 1'b1)
-					&& (ex_wdata_i == reg2_addr_o))
+					&& (ex_wd_i == reg2_addr_o))
 			reg2_o <= ex_wdata_i;
 		else if ((reg2_read_o == 1'b1) && (mem_wreg_i == 1'b1)
-					&& (mem_wdata_i == reg2_addr_o))
+					&& (mem_wd_i == reg2_addr_o))
 			reg2_o <= mem_wdata_i;
 		else if(reg2_read_o == 1'b1)
 			reg2_o <= reg2_data_i;

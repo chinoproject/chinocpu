@@ -53,13 +53,38 @@ module chino(
 	wire[`RegBus] wb_wdata_i;
 	
 	//连接译码阶段ID模块与通用寄存器Regfile模块
-  wire reg1_read;
-  wire reg2_read;
-  wire[`RegBus] reg1_data;
-  wire[`RegBus] reg2_data;
-  wire[`RegAddrBus] reg1_addr;
-  wire[`RegAddrBus] reg2_addr;
+	wire reg1_read;
+	wire reg2_read;
+	wire[`RegBus] reg1_data;
+	wire[`RegBus] reg2_data;
+	wire[`RegAddrBus] reg1_addr;
+	wire[`RegAddrBus] reg2_addr;
   
+	//连接EX和EX/MEM阶段的变量，三个变量储存乘除法运算的结果
+	wire[`RegBus]	ex_hi_o;
+	wire[`RegBus]	ex_lo_o;
+	wire 			ex_we_o;
+	//连接EX和EX/MEM阶段的变量，flags寄存器
+	wire[`RegBus]	ex_flags_o;
+
+	//连接EX/MEM和MEM阶段的变量
+	wire[`RegBus]	mem_hi_i;
+	wire[`RegBus]	mem_lo_i;
+	wire			mem_we_i;
+	wire[`RegBus]	mem_flags_i;
+
+	//连接MEM和WB/MEM阶段的变量
+	wire[`RegBus]	mem_hi_o;
+	wire[`RegBus]	mem_lo_o;
+	wire			mem_we_o;
+	wire[`RegBus]	mem_flags_o;
+
+	//L连接WB/MEM阶段和refile的变量
+	wire[`RegBus]	wb_hi_i;
+	wire[`RegBus]	wb_lo_i;
+	wire 			wb_we_i;
+	wire[`RegBus]	wb_flags_i;
+
   //pc_reg例化
 	pc_reg pc_reg0(
 		.clk(clk),
@@ -128,7 +153,12 @@ module chino(
 		.rdata1 (reg1_data),
 		.re2 (reg2_read),
 		.raddr2 (reg2_addr),
-		.rdata2 (reg2_data)
+		.rdata2 (reg2_data),
+
+		.hi(wb_hi_i),
+		.lo(wb_lo_i),
+		.mul_we(wb_we),
+		.flags_i(wb_flags_i)
 	);
 
 	//ID/EX模块
@@ -168,8 +198,12 @@ module chino(
 	  //EX模块的输出到EX/MEM模块信息
 		.wd_o(ex_wd_o),
 		.wreg_o(ex_wreg_o),
-		.wdata_o(ex_wdata_o)
+		.wdata_o(ex_wdata_o),
 		
+		.hi_o(ex_hi_o),
+		.lo_o(ex_lo_o),
+		.we_o(ex_we_o),
+		.flags(ex_flags_o)
 	);
 
   //EX/MEM模块
@@ -181,14 +215,19 @@ module chino(
 		.ex_wd(ex_wd_o),
 		.ex_wreg(ex_wreg_o),
 		.ex_wdata(ex_wdata_o),
-	
+		.ex_hi(ex_hi_o),
+		.ex_lo(ex_lo_o),
+		.ex_flags(ex_flags_o),
 
 		//送到访存阶段MEM模块的信息
 		.mem_wd(mem_wd_i),
 		.mem_wreg(mem_wreg_i),
-		.mem_wdata(mem_wdata_i)
+		.mem_wdata(mem_wdata_i),
 
-						       	
+		.mem_hi(mem_hi_i),
+		.mem_lo(mem_lo_i),
+		.mem_we(mem_we_i),
+		.mem_flags(mem_flags_i)			       	
 	);
 	
   //MEM模块例化
@@ -199,11 +238,19 @@ module chino(
 		.wd_i(mem_wd_i),
 		.wreg_i(mem_wreg_i),
 		.wdata_i(mem_wdata_i),
-	  
+	  	.hi_i(mem_hi_i),
+		.lo_i(mem_lo_i),
+		.we_i(mem_we_i),
+		.flags_i(mem_flags_i),
+
 		//送到MEM/WB模块的信息
 		.wd_o(mem_wd_o),
 		.wreg_o(mem_wreg_o),
-		.wdata_o(mem_wdata_o)
+		.wdata_o(mem_wdata_o),
+		.hi_o(mem_hi_o),
+		.lo_o(mem_lo_o),
+		.we_o(mem_we_o),
+		.flags_o(mem_flags_o)
 	);
 
   //MEM/WB模块
@@ -215,12 +262,19 @@ module chino(
 		.mem_wd(mem_wd_o),
 		.mem_wreg(mem_wreg_o),
 		.mem_wdata(mem_wdata_o),
-	
+		.mem_hi(mem_hi_o),
+		.mem_lo(mem_lo_o),
+		.mem_we(mem_we_o),
+		.mem_flags(mem_flags_o),
+
 		//送到回写阶段的信息
 		.wb_wd(wb_wd_i),
 		.wb_wreg(wb_wreg_i),
-		.wb_wdata(wb_wdata_i)
-									       	
+		.wb_wdata(wb_wdata_i),
+		.wb_hi(wb_hi_i),
+		.wb_lo(wb_lo_i),
+		.wb_we(wb_we_i),
+		.wb_flags(wb_flags_i)								       	
 	);
 
 endmodule

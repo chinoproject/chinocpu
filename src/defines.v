@@ -2,6 +2,7 @@
 `define RstEnable 1'b1
 `define RstDisable 1'b0
 `define ZeroWord 32'h00000000
+
 `define WriteEnable 1'b1
 `define WriteDisable 1'b0
 `define ReadEnable 1'b1
@@ -42,6 +43,11 @@
 `define EXE_MOV     8'b00001000
 `define EXE_MOVZ    8'b00001001
 `define EXE_MOVN    8'b00001010
+`define EXE_ADD     8'b00001011
+`define EXE_SUB     8'b00001100
+`define EXE_MULT    8'b00001101
+`define EXE_DIV     8'b00001110
+`define EXE_MULTU   8'b00001111
 
 //AluOp
 `define EXE_NOP_OP      8'b0000_0000
@@ -55,12 +61,19 @@
 `define EXE_MOV_OP      8'b0000_1000
 `define EXE_MOVZ_OP     8'b0000_1001
 `define EXE_MOVN_OP     8'b0000_1010
+`define EXE_ADD_OP      8'b0000_1011
+`define EXE_SUB_OP      8'b0000_1100
+`define EXE_MULT_OP     8'b0000_1101
+`define EXE_DIV_OP      8'b0000_1110
+`define EXE_MULTU_OP    8'b0000_1111
 
 //AluSel
-`define EXE_RES_NOP     3'b000
-`define EXE_RES_LOGIC   3'b001
-`define EXE_RES_SHIFT   3'b010
-`define EXE_RES_MOV     3'b011
+`define EXE_RES_NOP         3'b000
+`define EXE_RES_LOGIC       3'b001
+`define EXE_RES_SHIFT       3'b010
+`define EXE_RES_MOV         3'b011
+`define EXE_RES_ARITHMETIC  3'b100
+`define EXE_RES_MUL         3'b101
 
 //指令存储器inst_rom
 `define InstAddrBus 31:0
@@ -72,6 +85,7 @@
 //通用寄存器regfile
 `define RegAddrBus 4:0
 `define RegBus 31:0
+`define AriRegBus 32:0  //除乘法之外的运算
 `define RegWidth 32
 `define DoubleRegWidth 64
 `define DoubleRegBus 63:0

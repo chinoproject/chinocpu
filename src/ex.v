@@ -15,14 +15,25 @@ module ex(
 	//输出到MEM阶段的信息
 	output reg[`RegAddrBus]       	wd_o,
 	output reg                    	wreg_o,
-	output reg[`RegBus]				wdata_o
-	
+	output reg[`RegBus]				wdata_o,
+
+	output reg[`RegBus]				hi_o,
+	output reg[`RegBus]				lo_o,
+	output reg						we_o,
+	output reg[`RegBus]				flags
 );
 
-	reg[`RegBus] logicout;
-	reg[`RegBus] shiftout;
-	reg[`RegBus] movout;
-	reg			 we;
+	reg[`RegBus] 			logicout;
+	reg[`RegBus] 			shiftout;
+	reg[`RegBus] 			movout;
+	reg[`DoubleRegBus]		mulout;	//保存乘法的运算结果
+	wire[`AriRegBus]		reg2_i_mux;
+	wire[`AriRegBus]		result_arithmetic;
+
+	//减法运算则计算补码
+	assign reg2_i_mux = (aluop_i == `EXE_SUB_OP) ? (~{1'b0,reg2_i}) + 1:{1'b0,reg2_i};
+	assign result_arithmetic = {1'b0,reg1_i} + reg2_i_mux;
+	
 	always @ (*) begin
 		if(rst == `RstEnable) begin
 			logicout <= `ZeroWord;
@@ -68,6 +79,18 @@ module ex(
 		end
 	end
 
+	always @(*) begin
+		if (rst == `RstEnable)
+			flags <= `ZeroWord;
+		else
+			if (aluop_i == `EXE_SUB_OP || aluop_i == `EXE_ADD_OP) begin
+				flags[0] <= ((!reg2_i_mux[31] && !reg1_i[31]) && result_arithmetic[31])
+							|| ((reg2_i_mux[31] && reg1_i[31]) && !result_arithmetic[31]);	//溢出标志位
+				flags[1] <= result_arithmetic[32];//无符号整数进位标志位
+			end else
+				flags <= flags;
+	end
+
  always @ (*) begin
 	 wd_o <= wd_i;	 	 	
 	 wreg_o <= wreg_i;
@@ -75,6 +98,7 @@ module ex(
 	 	`EXE_RES_LOGIC:wdata_o <= logicout;
 		`EXE_RES_SHIFT:wdata_o <= shiftout;
 		`EXE_RES_MOV:wdata_o <= movout;
+		`EXE_RES_ARITHMETIC:wdata_o <= result_arithmetic[31:0];
 	 	default:wdata_o <= `ZeroWord;
 	 endcase
  end	
