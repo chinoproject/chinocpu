@@ -16,7 +16,7 @@ module chino(
 	wire[`InstAddrBus] id_pc_i;
 	wire[`InstBus] id_inst_i;
 	
-	//连接译码阶段ID模块的输出与ID/EX模块的输入
+	//连接译码阶段ID模块的输出与ID/EX模块的输出
 	wire[`AluOpBus] id_aluop_o;
 	wire[`AluSelBus] id_alusel_o;
 	wire[`RegBus] id_reg1_o;
@@ -32,7 +32,7 @@ module chino(
 	wire ex_wreg_i;
 	wire[`RegAddrBus] ex_wd_i;
 	
-	//连接执行阶段EX模块的输出与EX/MEM模块的输入
+	//连接执行阶段EX模块的输出与EX/MEM模块的输出
 	wire ex_wreg_o;
 	wire[`RegAddrBus] ex_wd_o;
 	wire[`RegBus] ex_wdata_o;
@@ -42,12 +42,12 @@ module chino(
 	wire[`RegAddrBus] mem_wd_i;
 	wire[`RegBus] mem_wdata_i;
 
-	//连接访存阶段MEM模块的输出与MEM/WB模块的输入
+	//连接访存阶段MEM模块的输出与MEM/WB模块的输出
 	wire mem_wreg_o;
 	wire[`RegAddrBus] mem_wd_o;
 	wire[`RegBus] mem_wdata_o;
 	
-	//连接MEM/WB模块的输出与回写阶段的输入	
+	//连接MEM/WB模块的输出与回写阶段的输入
 	wire wb_wreg_i;
 	wire[`RegAddrBus] wb_wd_i;
 	wire[`RegBus] wb_wdata_i;
@@ -85,17 +85,38 @@ module chino(
 	wire 			wb_we_i;
 	wire[`RegBus]	wb_flags_i;
 
+	//连接除法器与EX模块的变量
+    wire          div_signed_div_i;   //有符号运算信号
+    wire[`RegBus] div_opdata1_i;
+	wire[`RegBus] div_opdata2_i;
+    wire          div_start_i;        //开始除法运算信号
+    wire          div_annul_i;        //取消运算信号
+
+    wire[`DoubleRegBus]    div_result_o;
+    wire          div_ready_o;
+	//CTRL模块相关变量
+	wire[5:0]		stall;
+	wire 			req_from_id;
+	wire 			req_from_ex;
+
+	//CTRL模块例化
+	ctrl u_ctrl(
+		.rst(rst),
+		.req_from_id(req_from_id),
+		.req_from_ex(req_from_ex),
+		.stall(stall)
+	);
+
   //pc_reg例化
 	pc_reg pc_reg0(
 		.clk(clk),
 		.rst(rst),
 		.pc(pc),
-		.ce(rom_ce_o)	
-			
+		.ce(rom_ce_o),
+		.stall(stall)
 	);
-	
-  assign rom_addr_o = pc;
 
+  assign rom_addr_o = pc;
   //IF/ID模块例化
 	if_id u_if_id(
 		.clk(clk),
@@ -103,7 +124,8 @@ module chino(
 		.if_pc(pc),
 		.if_inst(rom_data_i),
 		.id_pc(id_pc_i),
-		.id_inst(id_inst_i)      	
+		.id_inst(id_inst_i),
+		.stall(stall)    	
 	);
 	
 	//译码阶段ID模块
@@ -138,7 +160,8 @@ module chino(
 		//ex阶段送来的信息
 		.ex_wdata_i(ex_wdata_o),
 		.ex_wd_i(ex_wd_o),
-		.ex_wreg_i(ex_wreg_o)
+		.ex_wreg_i(ex_wreg_o),
+		.stallreq(req_from_id)
 	);
 
   //通用寄存器Regfile例化
@@ -157,7 +180,7 @@ module chino(
 
 		.hi(wb_hi_i),
 		.lo(wb_lo_i),
-		.mul_we(wb_we),
+		.mul_we(wb_we_i),
 		.flags_i(wb_flags_i)
 	);
 
@@ -166,7 +189,7 @@ module chino(
 		.clk(clk),
 		.rst(rst),
 		
-		//从译码阶段ID模块传递的信息
+		//从译码阶段ID模块传�?�的信息
 		.id_aluop(id_aluop_o),
 		.id_alusel(id_alusel_o),
 		.id_reg1(id_reg1_o),
@@ -174,15 +197,28 @@ module chino(
 		.id_wd(id_wd_o),
 		.id_wreg(id_wreg_o),
 	
-		//传递到执行阶段EX模块的信息
+		//传到执行阶段EX模块的信息
 		.ex_aluop(ex_aluop_i),
 		.ex_alusel(ex_alusel_i),
 		.ex_reg1(ex_reg1_i),
 		.ex_reg2(ex_reg2_i),
 		.ex_wd(ex_wd_i),
-		.ex_wreg(ex_wreg_i)
+		.ex_wreg(ex_wreg_i),
+		.stall(stall)
 	);		
-	
+
+	//串行除法器例化
+	serial_div u_serial_div(
+		.clk(clk),
+		.rst(rst),
+		.signed_div_i(div_signed_div_i),
+		.opdata1_i(div_opdata1_i),
+		.opdata2_i(div_opdata2_i),
+		.start_i(div_start_i),
+		.annul_i(div_annul_i),
+		.result_o(div_result_o),
+		.ready_o(div_ready_o)
+	);
 	//EX模块
 	ex u_ex(
 		.rst(rst),
@@ -200,10 +236,27 @@ module chino(
 		.wreg_o(ex_wreg_o),
 		.wdata_o(ex_wdata_o),
 		
+		//乘除法结果保存寄存器
 		.hi_o(ex_hi_o),
 		.lo_o(ex_lo_o),
 		.we_o(ex_we_o),
-		.flags(ex_flags_o)
+	
+		//flags寄存器
+		.flags(ex_flags_o),
+
+		//流水线暂停信号
+		.stallreq(req_from_ex),
+
+		//从串行除法器传来的信息
+		.result_i(div_result_o),
+		.ready_i(div_ready_o),
+	
+		//送到串行除法器的信息
+		.signed_div_o(div_signed_div_i),
+		.div_start_o(div_start_i),
+		.div_op1(div_opdata1_i),
+		.div_op2(div_opdata2_i),
+		.div_annul_i(div_annul_i)
 	);
 
   //EX/MEM模块
@@ -218,6 +271,7 @@ module chino(
 		.ex_hi(ex_hi_o),
 		.ex_lo(ex_lo_o),
 		.ex_flags(ex_flags_o),
+		.ex_we(ex_we_o),
 
 		//送到访存阶段MEM模块的信息
 		.mem_wd(mem_wd_i),
@@ -227,14 +281,15 @@ module chino(
 		.mem_hi(mem_hi_i),
 		.mem_lo(mem_lo_i),
 		.mem_we(mem_we_i),
-		.mem_flags(mem_flags_i)			       	
+		.mem_flags(mem_flags_i),
+		.stall(stall)		       	
 	);
 	
   //MEM模块例化
 	mem u_mem(
 		.rst(rst),
 	
-		//来自EX/MEM模块的信息	
+		//来自EX/MEM模块的信息
 		.wd_i(mem_wd_i),
 		.wreg_i(mem_wreg_i),
 		.wdata_i(mem_wdata_i),
@@ -274,7 +329,8 @@ module chino(
 		.wb_hi(wb_hi_i),
 		.wb_lo(wb_lo_i),
 		.wb_we(wb_we_i),
-		.wb_flags(wb_flags_i)								       	
+		.wb_flags(wb_flags_i),
+		.stall(stall)							       	
 	);
 
 endmodule

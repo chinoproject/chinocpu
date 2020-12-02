@@ -2,7 +2,6 @@
 `define RstEnable 1'b1
 `define RstDisable 1'b0
 `define ZeroWord 32'h00000000
-
 `define WriteEnable 1'b1
 `define WriteDisable 1'b0
 `define ReadEnable 1'b1
@@ -25,7 +24,13 @@
 `define False_v 1'b0
 `define ChipEnable 1'b1
 `define ChipDisable 1'b0
-`define ZeroDoubleWord 64'h0
+`define ZeroDoubleWord 64'h0000000000000000
+`define Stop 1'b1
+`define NoStop 1'b0
+`define DivResNotReady 1'b0
+`define DivResReady 1'b1
+`define DivStop 1'b0
+`define DivStart 1'b1
 
 //访问类型
 `define MEM_SREG    4'b0010 //读一个寄存器
@@ -48,6 +53,7 @@
 `define EXE_MULT    8'b00001101
 `define EXE_DIV     8'b00001110
 `define EXE_MULTU   8'b00001111
+`define EXE_DIVU    8'b00010000
 
 //AluOp
 `define EXE_NOP_OP      8'b0000_0000
@@ -66,6 +72,7 @@
 `define EXE_MULT_OP     8'b0000_1101
 `define EXE_DIV_OP      8'b0000_1110
 `define EXE_MULTU_OP    8'b0000_1111
+`define EXE_DIVU_OP     8'b0001_0000
 
 //AluSel
 `define EXE_RES_NOP         3'b000
@@ -74,6 +81,7 @@
 `define EXE_RES_MOV         3'b011
 `define EXE_RES_ARITHMETIC  3'b100
 `define EXE_RES_MUL         3'b101
+`define EXE_RES_DIV         3'b110
 
 //指令存储器inst_rom
 `define InstAddrBus 31:0

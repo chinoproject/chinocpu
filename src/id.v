@@ -31,7 +31,9 @@ module id(
 	output reg[`RegBus]           	reg1_o,
 	output reg[`RegBus]           	reg2_o,
 	output reg[`RegAddrBus]       	wd_o,
-	output reg                    	wreg_o
+	output reg                    	wreg_o,
+	//送到CTRL模块的信息
+	output reg    					stallreq
 );
 
   wire[3:0]	mem = inst_i[63:60];	//访存类型
@@ -39,7 +41,6 @@ module id(
 
   reg[`RegBus]	imm;
   reg instvalid;
-  
  
 	always @ (*) begin	
 		if (rst == `RstEnable) begin
@@ -64,6 +65,8 @@ module id(
 			reg1_addr_o <= inst_i[46:42];
 			reg2_addr_o <= inst_i[41:37];		
 			imm <= `ZeroWord;
+			stallreq <= `NoStop;
+
 			case (mem)
 				`MEM_SREG:begin
 					reg1_read_o <= 1'b1;
@@ -151,16 +154,34 @@ module id(
 							aluop_o <= `EXE_MULT_OP;
 							alusel_o <= `EXE_RES_MUL;
 							instvalid <= `InstValid;
+							wreg_o <= `WriteDisable;
+							reg1_addr_o <= inst_i[51:47];
+							imm <= inst_i[46:15];
 						end
 						`EXE_DIV:begin
 							aluop_o <= `EXE_DIV_OP;
-							alusel_o <= `EXE_RES_MUL;
 							instvalid <= `InstValid;
+							wreg_o <= `WriteDisable;
+							alusel_o <= `EXE_RES_DIV;
+							reg1_addr_o <= inst_i[51:47];
+							imm <= inst_i[46:15];
+							//reg2_addr_o <= inst_i[46:42];
 						end
 						`EXE_MULTU:begin
 							aluop_o <= `EXE_MULTU_OP;
 							alusel_o <= `EXE_RES_MUL;
 							instvalid <= `InstValid;
+							wreg_o <= `WriteDisable;
+							reg1_addr_o <= inst_i[51:47];
+							imm <= inst_i[46:15];
+						end
+						`EXE_DIVU:begin
+							aluop_o <= `EXE_DIVU_OP;
+							instvalid <= `InstValid;
+							wreg_o <= `WriteDisable;
+							alusel_o <= `EXE_RES_DIV;
+							reg1_addr_o <= inst_i[51:47];
+							imm <= inst_i[46:15];
 						end
 						default:begin
 						end
@@ -249,16 +270,33 @@ module id(
 							aluop_o <= `EXE_MULT_OP;
 							alusel_o <= `EXE_RES_MUL;
 							instvalid <= `InstValid;
+							wreg_o <= `WriteDisable;
+							reg1_addr_o <= inst_i[51:47];
+							reg2_addr_o <= inst_i[46:42];
 						end
 						`EXE_DIV:begin
 							aluop_o <= `EXE_DIV_OP;
-							alusel_o <= `EXE_RES_MUL;
 							instvalid <= `InstValid;
+							wreg_o <= `WriteDisable;
+							alusel_o <= `EXE_RES_DIV;
+							reg1_addr_o <= inst_i[51:47];
+							reg2_addr_o <= inst_i[46:42];
 						end
 						`EXE_MULTU:begin
 							aluop_o <= `EXE_MULTU_OP;
 							alusel_o <= `EXE_RES_MUL;
 							instvalid <= `InstValid;
+							wreg_o <= `WriteDisable;
+							reg1_addr_o <= inst_i[51:47];
+							reg2_addr_o <= inst_i[46:42];
+						end
+						`EXE_DIVU:begin
+							aluop_o <= `EXE_DIVU_OP;
+							instvalid <= `InstValid;
+							wreg_o <= `WriteDisable;
+							alusel_o <= `EXE_RES_DIV;
+							reg1_addr_o <= inst_i[51:47];
+							reg2_addr_o <= inst_i[46:42];
 						end
 						default:begin
 						end

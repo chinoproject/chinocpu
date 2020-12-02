@@ -20,7 +20,20 @@ module ex(
 	output reg[`RegBus]				hi_o,
 	output reg[`RegBus]				lo_o,
 	output reg						we_o,
-	output reg[`RegBus]				flags
+	output reg[`RegBus]				flags,
+
+	//送到CTRL模块的信息
+	output reg 						stallreq,
+
+	//串行除法计算
+	input wire[`DoubleRegBus]		result_i,
+	input wire 						ready_i,
+
+	output reg 						signed_div_o,
+	output reg						div_start_o,
+	output reg 						div_annul_i,
+	output reg[`RegBus]				div_op1,
+	output reg[`RegBus]				div_op2
 );
 
 	reg[`RegBus] 			logicout;
@@ -29,7 +42,10 @@ module ex(
 	reg[`DoubleRegBus]		mulout;	//保存乘法的运算结果
 	wire[`AriRegBus]		reg2_i_mux;
 	wire[`AriRegBus]		result_arithmetic;
-
+	wire[`RegBus]			mul_reg2_mux;
+	wire[`RegBus]			mul_reg1_mux;
+	wire[`DoubleRegBus]		mulres_temp;
+	reg 					div_stallreq;	//除法运算导致流水线暂停
 	//减法运算则计算补码
 	assign reg2_i_mux = (aluop_i == `EXE_SUB_OP) ? (~{1'b0,reg2_i}) + 1:{1'b0,reg2_i};
 	assign result_arithmetic = {1'b0,reg1_i} + reg2_i_mux;
@@ -91,15 +107,122 @@ module ex(
 				flags <= flags;
 	end
 
- always @ (*) begin
-	 wd_o <= wd_i;	 	 	
-	 wreg_o <= wreg_i;
-	 case (alusel_i) 
-	 	`EXE_RES_LOGIC:wdata_o <= logicout;
-		`EXE_RES_SHIFT:wdata_o <= shiftout;
-		`EXE_RES_MOV:wdata_o <= movout;
-		`EXE_RES_ARITHMETIC:wdata_o <= result_arithmetic[31:0];
-	 	default:wdata_o <= `ZeroWord;
-	 endcase
- end	
+	assign mul_reg1_mux = ((aluop_i == `EXE_MULT_OP) && reg1_i[31]) ? (~reg1_i) + 1:reg1_i;
+	assign mul_reg2_mux = ((aluop_i == `EXE_MULT_OP) && reg2_i[31]) ? (~reg2_i) + 1:reg2_i;
+
+	assign mulres_temp = mul_reg1_mux * mul_reg2_mux;
+
+	always @(*) begin
+		if (rst == `RstEnable)
+			mulout <= `ZeroDoubleWord;
+		else if (aluop_i == `EXE_MULT_OP) begin
+			if (reg1_i[31] ^ reg2_i[31]) begin
+				//正数 * 负数，对结果取补码
+				mulout <= ~mulres_temp + 1;
+			end else begin
+				mulout <= mulres_temp;
+			end
+		end else begin
+			mulout <= mulres_temp;
+		end
+	end
+
+	//串行除法运算
+	always @(*) begin
+		if (rst == `RstEnable) begin
+			div_stallreq <= `NoStop;
+			div_op1 <= `ZeroWord;
+			div_op2 <= `ZeroWord;
+			div_start_o <= `DivStop;
+			signed_div_o <= `DivStop;
+		end else begin
+			div_stallreq <= `NoStop;
+			div_op1 <= `ZeroWord;
+			div_op2 <= `ZeroWord;
+			div_start_o <= `DivStop;
+			signed_div_o <= `DivStop;
+			case(aluop_i)
+				`EXE_DIV_OP:begin
+					if (ready_i == `DivResNotReady) begin
+						div_op1 <= reg1_i;
+						div_op2 <= reg2_i;
+						div_start_o <= `DivStart;
+						div_annul_i <= 1'b0;
+						signed_div_o <= 1'b1;
+						div_stallreq <= `Stop;		//暂停流水线
+					end else if (ready_i == `DivResReady) begin
+						div_op1 <= reg1_i;
+						div_op2 <= reg2_i;
+						div_start_o <= `DivStop;
+						signed_div_o <= 1'b1;
+						div_annul_i <= 1'b1;
+						div_stallreq <= `NoStop;	//不暂停流水线
+					end else begin
+						div_op1 <= `ZeroWord;
+						div_op2 <= `ZeroWord;
+						div_start_o <= `DivStop;
+						signed_div_o <= 1'b0;
+						div_annul_i <= 1'b1;
+						div_stallreq <= `NoStop;
+					end
+				end
+				`EXE_DIVU_OP:begin
+					if (ready_i == `DivResNotReady) begin
+						div_op1 <= reg1_i;
+						div_op2 <= reg2_i;
+						div_start_o <= `DivStart;
+						signed_div_o <= 1'b0;
+						div_annul_i <= 1'b0;
+						div_stallreq <= `Stop;		//暂停流水线
+					end else if (ready_i == `DivResReady) begin
+						div_op1 <= reg1_i;
+						div_op2 <= reg2_i;
+						div_start_o <= `DivStop;
+						signed_div_o <= 1'b0;
+						div_annul_i <= 1'b1;
+						div_stallreq <= `NoStop;	//不暂停流水线
+					end else begin
+						div_op1 <= `ZeroWord;
+						div_op2 <= `ZeroWord;
+						div_start_o <= `DivStop;
+						signed_div_o <= 1'b0;
+						div_annul_i <= 1'b1;
+						div_stallreq <= `NoStop;
+					end
+				end
+				default:begin
+				end
+			endcase
+		end
+	end
+	
+	always @(*) begin
+		//暂停流水线
+		stallreq <= div_stallreq;
+	end
+
+	always @ (*) begin
+		wd_o <= wd_i;	 	 	
+		wreg_o <= wreg_i;
+		case (alusel_i) 
+			`EXE_RES_LOGIC:wdata_o <= logicout;
+			`EXE_RES_SHIFT:wdata_o <= shiftout;
+			`EXE_RES_MOV:wdata_o <= movout;
+			`EXE_RES_ARITHMETIC:wdata_o <= result_arithmetic[31:0];
+			`EXE_RES_MUL:begin
+				hi_o <= mulout[63:32];
+				lo_o <= mulout[31:0];
+				we_o <= `WriteEnable;
+			end
+			`EXE_RES_DIV:begin
+				hi_o <= result_i[63:32];
+				lo_o <= result_i[31:0];
+				if (stallreq)
+					we_o <= `WriteDisable;
+				else
+					we_o <= `WriteEnable;
+			end
+		default:wdata_o <= `ZeroWord;
+		endcase
+	end	
 endmodule
