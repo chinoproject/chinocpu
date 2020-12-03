@@ -161,7 +161,13 @@ module chino(
 		.ex_wdata_i(ex_wdata_o),
 		.ex_wd_i(ex_wd_o),
 		.ex_wreg_i(ex_wreg_o),
-		.stallreq(req_from_id)
+		.stallreq(req_from_id),
+		.ex_hi_i(ex_hi_o),
+		.ex_lo_i(ex_lo_o),
+		.ex_we(ex_we_o),
+		.mem_hi_i(mem_hi_o),
+		.mem_lo_i(mem_lo_o),
+		.mem_we(mem_we_o)
 	);
 
   //通用寄存器Regfile例化

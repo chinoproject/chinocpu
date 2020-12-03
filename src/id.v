@@ -19,6 +19,14 @@ module id(
 	input wire[`RegAddrBus]			ex_wd_i,
 	input wire						ex_wreg_i,
 
+
+	input wire[`RegBus]				ex_hi_i,
+	input wire[`RegBus]				ex_lo_i,
+	input wire						ex_we,
+
+	input wire[`RegBus]				mem_hi_i,
+	input wire[`RegBus]				mem_lo_i,
+	input wire						mem_we,
 	//送到regfile的信息
 	output reg                    	reg1_read_o,
 	output reg                    	reg2_read_o,     
@@ -318,6 +326,18 @@ module id(
 		else if ((reg1_read_o == 1'b1) && (mem_wreg_i == 1'b1)
 					&& (mem_wd_i == reg1_addr_o))
 			reg1_o <= mem_wdata_i;
+		else if ((reg1_read_o == 1'b1) && (ex_we == 1'b1)
+					&& (reg1_addr_o == 30))
+			reg1_o <= ex_lo_i;
+		else if ((reg1_read_o == 1'b1) && (ex_we == 1'b1)
+					&& (reg1_addr_o == 31))
+			reg1_o <= ex_hi_i;
+		else if ((reg1_read_o == 1'b1) && (mem_we == 1'b1)
+					&& (reg1_addr_o == 30))
+			reg1_o <= mem_lo_i;
+		else if ((reg1_read_o == 1'b1) && (ex_we == 1'b1)
+					&& (reg1_addr_o == 31))
+			reg1_o <= mem_hi_i;
 	  	else if(reg1_read_o == 1'b1)
 	  		reg1_o <= reg1_data_i;
 	  	else if(reg1_read_o == 1'b0)
@@ -335,6 +355,18 @@ module id(
 		else if ((reg2_read_o == 1'b1) && (mem_wreg_i == 1'b1)
 					&& (mem_wd_i == reg2_addr_o))
 			reg2_o <= mem_wdata_i;
+		else if ((reg2_read_o == 1'b1) && (ex_we == 1'b1)
+					&& (reg2_addr_o == 30))
+			reg2_o <= ex_lo_i;
+		else if ((reg2_read_o == 1'b1) && (ex_we == 1'b1)
+					&& (reg2_addr_o == 31))
+			reg2_o <= ex_hi_i;
+		else if ((reg2_read_o == 1'b1) && (mem_we == 1'b1)
+					&& (reg2_addr_o == 30))
+			reg2_o <= mem_lo_i;
+		else if ((reg2_read_o == 1'b1) && (mem_we == 1'b1)
+					&& (reg2_addr_o == 31))
+			reg2_o <= mem_hi_i;
 		else if(reg2_read_o == 1'b1)
 			reg2_o <= reg2_data_i;
 		else if(reg2_read_o == 1'b0)
