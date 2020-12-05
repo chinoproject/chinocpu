@@ -15,7 +15,7 @@ module id_ex(
 	input wire                    	id_wreg,	
 	input wire[5:0]					stall,
 	input wire 						next_inst_in_delayslot_i,
-
+	input wire 						id_is_delayslot_i,
 	//传递到执行阶段的信息
 	output reg[`AluOpBus]         	ex_aluop,
 	output reg[`AluSelBus]        	ex_alusel,
@@ -51,7 +51,7 @@ module id_ex(
 			ex_wd <= id_wd;
 			ex_wreg <= id_wreg;		
 			is_delayslot_o <= next_inst_in_delayslot_i;
-			ex_is_in_delayslot_o <= next_inst_in_delayslot_i;
+			ex_is_in_delayslot_o <= id_is_delayslot_i;
 		end
 	end
 	

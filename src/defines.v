@@ -102,7 +102,7 @@
 `define EXE_RES_ARITHMETIC              4'b0100
 `define EXE_RES_MUL                     4'b0101
 `define EXE_RES_DIV                     4'b0110
-`define EXE_RES_NOT_CONDITION_JUMP      4'b0111
+`define EXE_RES_JUMP                    4'b0111
 
 //指令存储器inst_rom
 `define InstAddrBus 31:0

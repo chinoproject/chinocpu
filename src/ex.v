@@ -231,7 +231,7 @@ module ex(
 				else
 					we_o <= `WriteEnable;
 			end
-			`EXE_RES_NOT_CONDITION_JUMP:wdata_o <= wdata_o;
+			`EXE_RES_JUMP:wdata_o <= wdata_o;
 		default:wdata_o <= `ZeroWord;
 		endcase
 	end	

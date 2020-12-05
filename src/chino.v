@@ -55,11 +55,14 @@ module chino(
 	//连接译码阶段ID模块与通用寄存器Regfile模块
 	wire reg1_read;
 	wire reg2_read;
+//	wire reg3_read;
 	wire[`RegBus] reg1_data;
 	wire[`RegBus] reg2_data;
+//	wire[`RegBus] reg3_data;
 	wire[`RegAddrBus] reg1_addr;
 	wire[`RegAddrBus] reg2_addr;
-  
+//	wire[`RegAddrBus] reg3_addr;
+
 	//连接EX和EX/MEM阶段的变量，三个变量储存乘除法运算的结果
 	wire[`RegBus]	ex_hi_o;
 	wire[`RegBus]	ex_lo_o;
@@ -108,7 +111,7 @@ module chino(
 	wire 			is_delayslot_o;
 	wire 			next_inst_in_delayslot_i;
 	wire 			is_delayslot_i;
-
+	wire 			id_is_delayslot;
 	//CTRL模块例化
 	ctrl u_ctrl(
 		.rst(rst),
@@ -190,7 +193,11 @@ module chino(
 
 		//送到ID/EX模块的信息
 		.is_delayslot_o(is_delayslot_o),
-		.next_inst_in_delayslot_o(next_inst_in_delayslot_o)
+		.next_inst_in_delayslot_o(next_inst_in_delayslot_o),
+		.id_is_delayslot_o(id_is_delayslot)
+		/*.reg3_read_o(),
+		.reg3_addr_o(),
+		.reg3_data_i()*/
 	);
 
   //通用寄存器Regfile例化
@@ -206,7 +213,10 @@ module chino(
 		.re2 (reg2_read),
 		.raddr2 (reg2_addr),
 		.rdata2 (reg2_data),
-
+		/*.re3(),
+		.raddr3(),
+		.rdata3(),
+*/
 		.hi(wb_hi_i),
 		.lo(wb_lo_i),
 		.mul_we(wb_we_i),
@@ -242,7 +252,8 @@ module chino(
 		.is_delayslot_o(is_delayslot_i),
 
 		//传到执行阶段EX模块的信息
-		.ex_is_in_delayslot_o(ex_is_in_delayslot_o)
+		.ex_is_in_delayslot_o(ex_is_in_delayslot_o),
+		.id_is_delayslot_i(id_is_delayslot)
 	);		
 
 	//串行除法器例化
