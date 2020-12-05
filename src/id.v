@@ -27,6 +27,7 @@ module id(
 	input wire[`RegBus]				mem_hi_i,
 	input wire[`RegBus]				mem_lo_i,
 	input wire						mem_we,
+
 	//送到regfile的信息
 	output reg                    	reg1_read_o,
 	output reg                    	reg2_read_o,     
@@ -41,15 +42,31 @@ module id(
 	output reg[`RegAddrBus]       	wd_o,
 	output reg                    	wreg_o,
 	//送到CTRL模块的信息
-	output reg    					stallreq
+	output reg    					stallreq,
+
+	//送到PC_REG模块的信息
+	output reg 						branch_flag_o,
+	output reg[`RegBus]				target_addr_o,
+
+	//送到ID/EX模块的信息
+	output reg						next_inst_in_delayslot_o,
+	output reg 						is_delayslot_o,
+	//从ID/EX模块传来的信息
+	input wire 						is_delayslot_i
+
 );
 
-  wire[3:0]	mem = inst_i[63:60];	//访存类型
-  wire[7:0]	op	= inst_i[59:52];
+  	wire[3:0]	mem = inst_i[63:60];	//访存类型
+  	wire[7:0]	op	= inst_i[59:52];
 
-  reg[`RegBus]	imm;
-  reg instvalid;
- 
+  	reg[`RegBus]	imm;
+	reg 			instvalid;
+	wire[`RegBus] 	inst_n1;
+	wire[`RegBus]	inst_n2;
+
+	assign inst_n1 = pc_i + 8;
+	assign inst_n2 = pc_i + 16;
+
 	always @ (*) begin	
 		if (rst == `RstEnable) begin
 			aluop_o <= `EXE_NOP_OP;
@@ -74,7 +91,7 @@ module id(
 			reg2_addr_o <= inst_i[41:37];		
 			imm <= `ZeroWord;
 			stallreq <= `NoStop;
-
+			next_inst_in_delayslot_o <= `NotInDelaySlot;
 			case (mem)
 				`MEM_SREG:begin
 					reg1_read_o <= 1'b1;
@@ -191,6 +208,50 @@ module id(
 							reg1_addr_o <= inst_i[51:47];
 							imm <= inst_i[46:15];
 						end
+						`EXE_JMP:begin
+							aluop_o <= `EXE_JMP_OP;
+							instvalid <= `InstValid;
+							wreg_o <= `WriteDisable;
+							alusel_o <= `EXE_RES_NOT_CONDITION_JUMP;
+							target_addr_o <= inst_i[51:20];
+							branch_flag_o <= `Branch;
+							next_inst_in_delayslot_o <= `InDelaySlot;
+						end
+						/*`EXE_JNG:begin
+							aluop_o <=`EXE_JNG_OP;
+							instvalid <=`InstValid;
+							wreg_o <= `WriteDisable;
+						end
+						`EXE_JG:begin
+							aluop_o <= `EXE_JG_OP;
+							instvalid <= `InstValid;
+							wreg_o <= `WriteDisable;
+						end
+						`EXE_JNL:begin
+							aluop_o <= `EXE_JNL_OP;
+							instvalid <= `InstValid;
+							wreg_o <= `WriteDisable;
+						end
+						`EXE_JL:begin
+							aluop_o <= `EXE_JL_OP;
+							instvalid <= `InstValid;
+							wreg_o <= `WriteDisable;
+						end
+						`EXE_JE:begin
+							aluop_o <= `EXE_JE_OP;
+							instvalid <= `InstValid;
+							wreg_o <= `WriteDisable;
+						end
+						`EXE_JNE:begin
+							aluop_o <= `EXE_JNE_OP;
+
+						end
+						`EXE_CALL:begin
+						end
+						`EXE_RET:begin
+						end
+						`EXE_LOOP:begin
+						end*/
 						default:begin
 						end
 					endcase

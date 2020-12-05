@@ -7,7 +7,10 @@ module pc_reg(
 	input wire[5:0]									stall,
 
 	output reg[`InstAddrBus]						pc,
-	output reg                    					ce
+	output reg                    					ce,
+
+	input wire										branch_flag_i,
+	input wire[`RegBus]								target_addr_i
 	
 );
 	parameter  RUN_N_INST = 4;
@@ -16,7 +19,10 @@ module pc_reg(
 		if (ce == `ChipDisable) begin
 			pc <= `ZeroWord;
 		end else if (stall[0] == `NoStop) begin
-	 		pc <= pc + 8;
+			if (branch_flag_i == `Branch)
+				pc <= target_addr_i;
+			else
+	 			pc <= pc + 8;
 		end
 	end
 	

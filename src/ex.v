@@ -29,6 +29,9 @@ module ex(
 	input wire[`DoubleRegBus]		result_i,
 	input wire 						ready_i,
 
+	//延迟槽指令
+	input wire 						ex_is_in_delayslot,
+
 	output reg 						signed_div_o,
 	output reg						div_start_o,
 	output reg 						div_annul_i,
@@ -46,6 +49,7 @@ module ex(
 	wire[`RegBus]			mul_reg1_mux;
 	wire[`DoubleRegBus]		mulres_temp;
 	reg 					div_stallreq;	//除法运算导致流水线暂停
+
 	//减法运算则计算补码
 	assign reg2_i_mux = (aluop_i == `EXE_SUB_OP) ? (~{1'b0,reg2_i}) + 1:{1'b0,reg2_i};
 	assign result_arithmetic = {1'b0,reg1_i} + reg2_i_mux;
@@ -202,8 +206,13 @@ module ex(
 	end
 
 	always @ (*) begin
-		wd_o <= wd_i;	 	 	
-		wreg_o <= wreg_i;
+		wd_o <= wd_i;	 
+
+		if(ex_is_in_delayslot)
+			wreg_o <= `WriteDisable;
+		else	 	
+			wreg_o <= wreg_i;
+
 		case (alusel_i) 
 			`EXE_RES_LOGIC:wdata_o <= logicout;
 			`EXE_RES_SHIFT:wdata_o <= shiftout;
@@ -222,6 +231,7 @@ module ex(
 				else
 					we_o <= `WriteEnable;
 			end
+			`EXE_RES_NOT_CONDITION_JUMP:wdata_o <= wdata_o;
 		default:wdata_o <= `ZeroWord;
 		endcase
 	end	
