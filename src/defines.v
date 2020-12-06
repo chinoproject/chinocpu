@@ -34,7 +34,7 @@
 //访问类型
 `define MEM_SREG    4'b0010 //读一个寄存器
 `define MEM_DREG    4'b0001 //读两个寄存器
-`define MEMZREG     4'B0100 //不读取寄存器
+`define MEM_ZREG     4'B0100 //不读取寄存器
 
 //指令
 `define EXE_NOP     8'b00000000
@@ -103,6 +103,9 @@
 `define EXE_RES_MUL                     4'b0101
 `define EXE_RES_DIV                     4'b0110
 `define EXE_RES_JUMP                    4'b0111
+`define EXE_RES_CALL                    4'b1000
+`define EXE_RES_RET                     4'B1001
+`define EXE_RES_LOOP                    4'b1010
 
 //指令存储器inst_rom
 `define InstAddrBus 31:0

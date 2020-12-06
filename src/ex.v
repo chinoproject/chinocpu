@@ -232,6 +232,9 @@ module ex(
 					we_o <= `WriteEnable;
 			end
 			`EXE_RES_JUMP:wdata_o <= wdata_o;
+			`EXE_RES_CALL:wdata_o <= reg2_i;
+			`EXE_RES_RET:wdata_o <= wdata_o;
+			`EXE_RES_LOOP:wdata_o <= reg2_i - 1;
 		default:wdata_o <= `ZeroWord;
 		endcase
 	end	

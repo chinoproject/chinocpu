@@ -170,7 +170,7 @@ module chino(
 		//mem阶段送来的信息
 		.mem_wdata_i(mem_wdata_o),
 		.mem_wd_i(mem_wd_o),
-		.mem_wreg_i(ex_wreg_o),
+		.mem_wreg_i(mem_wreg_o),
 
 		//ex阶段送来的信息
 		.ex_wdata_i(ex_wdata_o),
@@ -215,7 +215,7 @@ module chino(
 		.rdata2 (reg2_data),
 		.re3(reg3_read),
 		.raddr3(reg3_addr),
-		.rdata3(reg2_data),
+		.rdata3(reg3_data),
 
 		.hi(wb_hi_i),
 		.lo(wb_lo_i),
