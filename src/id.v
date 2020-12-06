@@ -363,7 +363,7 @@ module id(
 							alusel_o <= `EXE_RES_LOOP;
 							wreg_o <= `WriteEnable;
 							wd_o <= 5'd28;
-							imm <= inst_i[51:20];
+							//imm <= inst_i[51:20];
 							reg1_addr_o <= 5'd28;
 
 							reg2_addr_o <= 5'd28;
@@ -625,6 +625,21 @@ module id(
 							reg1_addr_o <= inst_i[51:47];
 							target_addr_o <= reg1_o;
 							next_inst_in_delayslot_o <= `InDelaySlot;
+						end
+						`EXE_LOOP:begin
+							aluop_o <= `EXE_LOOP_OP;
+							alusel_o <= `EXE_RES_LOOP;
+							wreg_o <= `WriteEnable;
+							wd_o <= 5'd28;
+							reg2_addr_o <= 5'd28;
+							//reg2_read_o <= 1'b1;
+							reg1_addr_o <= inst_i[51:47];
+							if (reg2_o != 0) begin
+								branch_flag_o <= `Branch;
+								target_addr_o <= reg1_o;
+								next_inst_in_delayslot_o <= `NotInDelaySlot;
+							end else
+								branch_flag_o <= `NotBranch;
 						end
 						default:begin
 						end
