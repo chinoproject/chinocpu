@@ -21,10 +21,10 @@ module regfile(
 	output reg[`RegBus]           					rdata2,
 
 	//读端口3
-	/*input wire										re3,
+	input wire										re3,
 	input wire[`RegAddrBus]			  				raddr3,
 	output reg[`RegBus]           					rdata3,
-*/
+
 	input wire[`RegBus]								hi,
 	input wire[`RegBus]								lo,
 	input wire										mul_we,
@@ -82,7 +82,7 @@ module regfile(
 	  end
 	end
 
-	/*always @(*) begin
+	always @(*) begin
 		if(rst == `RstEnable) begin
 			  rdata3 <= `ZeroWord;
 	  end else if(raddr3 == `RegNumLog2'h0) begin
@@ -95,5 +95,5 @@ module regfile(
 	  end else begin
 	      rdata3 <= `ZeroWord;
 	  end
-	end*/
+	end
 endmodule
