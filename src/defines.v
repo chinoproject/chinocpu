@@ -7,7 +7,7 @@
 `define ReadEnable 1'b1
 `define ReadDisable 1'b0
 `define AluOpBus 7:0
-`define AluSelBus 2:0
+`define AluSelBus 3:0
 `define InstValid 1'b0
 `define InstInvalid 1'b1
 `define Stop 1'b1
@@ -31,10 +31,10 @@
 `define DivResReady 1'b1
 `define DivStop 1'b0
 `define DivStart 1'b1
-
 //访问类型
 `define MEM_SREG    4'b0010 //读一个寄存器
 `define MEM_DREG    4'b0001 //读两个寄存器
+`define MEM_ZREG     4'B0100 //不读取寄存器
 
 //指令
 `define EXE_NOP     8'b00000000
@@ -54,6 +54,16 @@
 `define EXE_DIV     8'b00001110
 `define EXE_MULTU   8'b00001111
 `define EXE_DIVU    8'b00010000
+`define EXE_JMP     8'b00010001
+`define EXE_JNG     8'b00010010
+`define EXE_JG      8'b00010011
+`define EXE_JNL     8'b00010100
+`define EXE_JL      8'b00010101
+`define EXE_JE      8'b00010110
+`define EXE_JNE     8'b00010111
+`define EXE_CALL    8'b00011000
+`define EXE_RET     8'b00011001
+`define EXE_LOOP    8'b00011010
 
 //AluOp
 `define EXE_NOP_OP      8'b0000_0000
@@ -73,15 +83,29 @@
 `define EXE_DIV_OP      8'b0000_1110
 `define EXE_MULTU_OP    8'b0000_1111
 `define EXE_DIVU_OP     8'b0001_0000
+`define EXE_JMP_OP      8'b0001_0001
+`define EXE_JNG_OP      8'b0001_0010
+`define EXE_JG_OP       8'b0001_0011
+`define EXE_JNL_OP      8'b0001_0100
+`define EXE_JL_OP       8'b0001_0101
+`define EXE_JE_OP       8'b0001_0110
+`define EXE_JNE_OP      8'b0001_0111
+`define EXE_CALL_OP     8'b0001_1000
+`define EXE_RET_OP      8'b0001_1001
+`define EXE_LOOP_OP     8'b0001_1010
 
 //AluSel
-`define EXE_RES_NOP         3'b000
-`define EXE_RES_LOGIC       3'b001
-`define EXE_RES_SHIFT       3'b010
-`define EXE_RES_MOV         3'b011
-`define EXE_RES_ARITHMETIC  3'b100
-`define EXE_RES_MUL         3'b101
-`define EXE_RES_DIV         3'b110
+`define EXE_RES_NOP                     4'b0000
+`define EXE_RES_LOGIC                   4'b0001
+`define EXE_RES_SHIFT                   4'b0010
+`define EXE_RES_MOV                     4'b0011
+`define EXE_RES_ARITHMETIC              4'b0100
+`define EXE_RES_MUL                     4'b0101
+`define EXE_RES_DIV                     4'b0110
+`define EXE_RES_JUMP                    4'b0111
+`define EXE_RES_CALL                    4'b1000
+`define EXE_RES_RET                     4'B1001
+`define EXE_RES_LOOP                    4'b1010
 
 //指令存储器inst_rom
 `define InstAddrBus 31:0

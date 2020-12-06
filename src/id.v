@@ -8,6 +8,7 @@ module id(
 
 	input wire[`RegBus]           	reg1_data_i,
 	input wire[`RegBus]           	reg2_data_i,
+	input wire[`RegBus]				reg3_data_i,
 
 	//从mem阶段送来的信息，数据前推，解决数据冲突
 	input wire[`RegBus]				mem_wdata_i,
@@ -27,12 +28,15 @@ module id(
 	input wire[`RegBus]				mem_hi_i,
 	input wire[`RegBus]				mem_lo_i,
 	input wire						mem_we,
+
 	//送到regfile的信息
 	output reg                    	reg1_read_o,
-	output reg                    	reg2_read_o,     
+	output reg                    	reg2_read_o, 
+	output reg 						reg3_read_o,    
 	output reg[`RegAddrBus]       	reg1_addr_o,
 	output reg[`RegAddrBus]       	reg2_addr_o, 	      
-	
+	output reg[`RegAddrBus]			reg3_addr_o,
+
 	//送到执行阶段的信息
 	output reg[`AluOpBus]         	aluop_o,
 	output reg[`AluSelBus]        	alusel_o,
@@ -41,15 +45,32 @@ module id(
 	output reg[`RegAddrBus]       	wd_o,
 	output reg                    	wreg_o,
 	//送到CTRL模块的信息
-	output reg    					stallreq
+	output reg    					stallreq,
+
+	//送到PC_REG模块的信息
+	output reg 						branch_flag_o,
+	output reg[`RegBus]				target_addr_o,
+
+	//送到ID/EX模块的信息
+	output reg						next_inst_in_delayslot_o,
+	output reg 						is_delayslot_o,
+	output reg 						id_is_delayslot_o,
+	//从ID/EX模块传来的信息
+	input wire 						is_delayslot_i
 );
 
-  wire[3:0]	mem = inst_i[63:60];	//访存类型
-  wire[7:0]	op	= inst_i[59:52];
+  	wire[3:0]	mem = inst_i[63:60];	//访存类型
+  	wire[7:0]	op	= inst_i[59:52];
 
-  reg[`RegBus]	imm;
-  reg instvalid;
- 
+  	reg[`RegBus]	imm;
+	reg 			instvalid;
+	wire[`RegBus] 	inst_n1;
+	wire[`RegBus]	inst_n2;
+	reg[`RegBus]	reg3_o;
+	reg[32:0]		temp;
+	assign inst_n1 = pc_i + 8;
+	assign inst_n2 = pc_i + 16;
+	//assign temp = reg1_o + {1'b0,~reg2_o}
 	always @ (*) begin	
 		if (rst == `RstEnable) begin
 			aluop_o <= `EXE_NOP_OP;
@@ -71,11 +92,32 @@ module id(
 			reg1_read_o <= 1'b0;
 			reg2_read_o <= 1'b0;
 			reg1_addr_o <= inst_i[46:42];
-			reg2_addr_o <= inst_i[41:37];		
+			reg2_addr_o <= inst_i[41:37];
+
+			//目前仅有条件跳转指令使用
+			//reg3_addr_o <= inst_i[41:37];		
 			imm <= `ZeroWord;
 			stallreq <= `NoStop;
-
+			next_inst_in_delayslot_o <= `NotInDelaySlot;
+			branch_flag_o <= `NotBranch;
 			case (mem)
+				`MEM_ZREG:begin
+					case(op)
+						`EXE_RET:begin
+							aluop_o <= `EXE_RET_OP;
+							alusel_o <= `EXE_RES_RET;
+							instvalid <= `InstValid;
+							wreg_o <= `WriteDisable;
+							reg1_read_o <= 1'b1;
+							reg1_addr_o <= 5'd29;
+							target_addr_o <= reg1_o;
+							branch_flag_o <= `Branch;
+							next_inst_in_delayslot_o <= `InDelaySlot;
+						end
+						default:begin
+						end
+					endcase
+				end
 				`MEM_SREG:begin
 					reg1_read_o <= 1'b1;
 					reg2_read_o <= 1'b0;
@@ -190,6 +232,149 @@ module id(
 							alusel_o <= `EXE_RES_DIV;
 							reg1_addr_o <= inst_i[51:47];
 							imm <= inst_i[46:15];
+						end
+						`EXE_JMP:begin
+							aluop_o <= `EXE_JMP_OP;
+							instvalid <= `InstValid;
+							wreg_o <= `WriteDisable;
+							alusel_o <= `EXE_RES_JUMP;
+							target_addr_o <= inst_i[51:20];
+							branch_flag_o <= `Branch;
+							next_inst_in_delayslot_o <= `InDelaySlot;
+						end
+						`EXE_JNG:begin
+							aluop_o <=`EXE_JNG_OP;
+							instvalid <=`InstValid;
+							wreg_o <= `WriteDisable;
+							alusel_o <= `EXE_RES_JUMP; 
+							reg1_addr_o <= inst_i[51:47];
+							reg2_addr_o <= inst_i[46:42];
+							reg2_read_o <= 1'b1;
+							temp = {1'b0,reg1_o} + (~{1'b0,reg2_o}) + 1;
+
+							if (temp[32] != 1 || temp == 0) begin
+								branch_flag_o <= `Branch;
+								target_addr_o <= inst_i[41:10];
+								next_inst_in_delayslot_o <= `InDelaySlot;
+							end else
+								branch_flag_o <= `NotBranch;
+							
+						end
+						`EXE_JG:begin
+							aluop_o <= `EXE_JG_OP;
+							instvalid <= `InstValid;
+							wreg_o <= `WriteDisable;
+							alusel_o <= `EXE_RES_JUMP;
+							reg1_addr_o <= inst_i[51:47];
+							reg2_addr_o <= inst_i[46:42];
+							reg2_read_o <= 1'b1;
+							temp <= {1'b0,reg1_o} + (~{1'b0,reg2_o}) + 1;
+
+							if (temp[32] != 1 && temp != 0) begin
+								branch_flag_o <= `Branch;
+								target_addr_o <= inst_i[41:10];
+								next_inst_in_delayslot_o <= `InDelaySlot;
+							end else
+								branch_flag_o <= `NotBranch;
+
+						end
+						`EXE_JNL:begin
+							aluop_o <= `EXE_JNL_OP;
+							instvalid <= `InstValid;
+							wreg_o <= `WriteDisable;
+							alusel_o <= `EXE_RES_JUMP; 
+							reg1_addr_o <= inst_i[51:47];
+							reg2_addr_o <= inst_i[46:42];
+							reg2_read_o <= 1'b1;
+							temp = {1'b0,reg1_o} + (~{1'b0,reg2_o}) + 1;
+
+							if (temp[32] == 1 || temp == 0) begin
+								branch_flag_o <= `Branch;
+								target_addr_o <= inst_i[41:10];
+								next_inst_in_delayslot_o <= `InDelaySlot;
+							end else
+								branch_flag_o <= `NotBranch;
+
+						end
+						`EXE_JL:begin
+							aluop_o <= `EXE_JL_OP;
+							instvalid <= `InstValid;
+							wreg_o <= `WriteDisable;
+							alusel_o <= `EXE_RES_JUMP; 
+							reg1_addr_o <= inst_i[51:47];
+							reg2_addr_o <= inst_i[46:42];
+							reg2_read_o <= 1'b1;
+							temp <= {1'b0,reg1_o} + (~{1'b0,reg2_o}) + 1;
+
+							if (temp[32] == 1 && temp != 0) begin
+								branch_flag_o <= `Branch;
+								target_addr_o <= inst_i[41:10];
+								next_inst_in_delayslot_o <= `InDelaySlot;
+							end else
+								branch_flag_o <= `NotBranch;
+						end
+						`EXE_JE:begin
+							aluop_o <= `EXE_JE_OP;
+							instvalid <= `InstValid;
+							wreg_o <= `WriteDisable;
+							alusel_o <= `EXE_RES_JUMP; 
+							reg1_addr_o <= inst_i[51:47];
+							reg2_addr_o <= inst_i[46:42];
+							reg2_read_o <= 1'b1;
+							temp <= {1'b0,reg1_o} + (~{1'b0,reg2_o}) + 1;
+
+							if (temp == 0) begin
+								branch_flag_o <= `Branch;
+								target_addr_o <= inst_i[41:10];
+								next_inst_in_delayslot_o <= `InDelaySlot;
+							end else
+								branch_flag_o <= `NotBranch;
+						end
+						`EXE_JNE:begin
+							aluop_o <= `EXE_JNE_OP;
+							instvalid <= `InstValid;
+							wreg_o <= `WriteDisable;
+							alusel_o <= `EXE_RES_JUMP; 
+							reg1_addr_o <= inst_i[51:47];
+							reg2_addr_o <= inst_i[46:42];
+							reg2_read_o <= 1'b1;
+							temp <= {1'b0,reg1_o} + (~{1'b0,reg2_o}) + 1;
+
+							if (temp != 0) begin
+								branch_flag_o <= `Branch;
+								target_addr_o <= inst_i[41:10];
+								next_inst_in_delayslot_o <= `InDelaySlot;
+							end else
+								branch_flag_o <= `NotBranch;
+						end
+						`EXE_CALL:begin
+							aluop_o <= `EXE_CALL_OP;
+							alusel_o <= `EXE_RES_CALL;
+							instvalid <= `InstValid;
+							imm <= pc_i + 8;
+							wd_o <= 5'd29;
+							wreg_o <= `WriteEnable;
+							branch_flag_o <= `Branch;
+							target_addr_o <= inst_i[51:20];
+							next_inst_in_delayslot_o <= `InDelaySlot;
+						end
+						`EXE_LOOP:begin
+							aluop_o <= `EXE_LOOP_OP;
+							alusel_o <= `EXE_RES_LOOP;
+							wreg_o <= `WriteEnable;
+							wd_o <= 5'd28;
+							//imm <= inst_i[51:20];
+							reg1_addr_o <= 5'd28;
+
+							reg2_addr_o <= 5'd28;
+							reg2_read_o <= 1'b1;
+
+							if (reg1_o != 0) begin
+								branch_flag_o <= `Branch;
+								target_addr_o <= inst_i[51:20];
+								next_inst_in_delayslot_o <= `NotInDelaySlot;
+							end else
+								branch_flag_o <= `NotBranch;
 						end
 						default:begin
 						end
@@ -306,6 +491,156 @@ module id(
 							reg1_addr_o <= inst_i[51:47];
 							reg2_addr_o <= inst_i[46:42];
 						end
+						`EXE_JMP:begin
+							aluop_o <= `EXE_JMP_OP;
+							instvalid <= `InstValid;
+							wreg_o <= `WriteDisable;
+							alusel_o <= `EXE_RES_JUMP;
+							target_addr_o <= reg1_o;
+							branch_flag_o <= `Branch;
+							next_inst_in_delayslot_o <= `InDelaySlot;
+						end
+						`EXE_JNG:begin
+							aluop_o <=`EXE_JNG_OP;
+							instvalid <=`InstValid;
+							wreg_o <= `WriteDisable;
+							alusel_o <= `EXE_RES_JUMP; 
+							reg1_addr_o <= inst_i[51:47];
+							reg2_addr_o <= inst_i[46:42];
+							reg3_addr_o <= inst_i[41:37];
+							reg3_read_o <= 1'b1;
+							reg2_read_o <= 1'b1;
+							temp = {1'b0,reg1_o} + (~{1'b0,reg2_o}) + 1;
+
+							if (temp[32] != 1 || temp == 0) begin
+								branch_flag_o <= `Branch;
+								target_addr_o <= reg3_o;
+								next_inst_in_delayslot_o <= `InDelaySlot;
+							end else
+								branch_flag_o <= `NotBranch;
+							
+						end
+						`EXE_JG:begin
+							aluop_o <= `EXE_JG_OP;
+							instvalid <= `InstValid;
+							wreg_o <= `WriteDisable;
+							alusel_o <= `EXE_RES_JUMP;
+							reg1_addr_o <= inst_i[51:47];
+							reg2_addr_o <= inst_i[46:42];
+							reg3_addr_o <= inst_i[41:37];
+							reg3_read_o <= 1'b1;
+							reg2_read_o <= 1'b1;
+							temp <= {1'b0,reg1_o} + (~{1'b0,reg2_o}) + 1;
+
+							if (temp[32] != 1 && temp != 0) begin
+								branch_flag_o <= `Branch;
+								target_addr_o <= reg3_o;
+								next_inst_in_delayslot_o <= `InDelaySlot;
+							end else
+								branch_flag_o <= `NotBranch;
+
+						end
+						`EXE_JNL:begin
+							aluop_o <= `EXE_JNL_OP;
+							instvalid <= `InstValid;
+							wreg_o <= `WriteDisable;
+							reg1_addr_o <= inst_i[51:47];
+							reg2_addr_o <= inst_i[46:42];
+							reg3_addr_o <= inst_i[41:37];
+							reg3_read_o <= 1'b1;
+							reg2_read_o <= 1'b1;
+							temp = {1'b0,reg1_o} + (~{1'b0,reg2_o}) + 1;
+
+							if (temp[32] == 1 || temp == 0) begin
+								branch_flag_o <= `Branch;
+								target_addr_o <= reg3_o;
+								next_inst_in_delayslot_o <= `InDelaySlot;
+							end else
+								branch_flag_o <= `NotBranch;
+
+						end
+						`EXE_JL:begin
+							aluop_o <= `EXE_JL_OP;
+							instvalid <= `InstValid;
+							wreg_o <= `WriteDisable;
+							reg1_addr_o <= inst_i[51:47];
+							reg2_addr_o <= inst_i[46:42];
+							reg3_addr_o <= inst_i[41:37];
+							reg3_read_o <= 1'b1;
+							reg2_read_o <= 1'b1;
+							temp <= {1'b0,reg1_o} + (~{1'b0,reg2_o}) + 1;
+
+							if (temp[32] == 1 && temp != 0) begin
+								branch_flag_o <= `Branch;
+								target_addr_o <= reg3_o;
+								next_inst_in_delayslot_o <= `InDelaySlot;
+							end else
+								branch_flag_o <= `NotBranch;
+						end
+						`EXE_JE:begin
+							aluop_o <= `EXE_JE_OP;
+							instvalid <= `InstValid;
+							wreg_o <= `WriteDisable;
+							reg1_addr_o <= inst_i[51:47];
+							reg2_addr_o <= inst_i[46:42];
+							reg3_addr_o <= inst_i[41:37];
+							reg3_read_o <= 1'b1;
+							reg2_read_o <= 1'b1;
+							temp <= {1'b0,reg1_o} + (~{1'b0,reg2_o}) + 1;
+
+							if (temp == 0) begin
+								branch_flag_o <= `Branch;
+								target_addr_o <= reg3_o;
+								next_inst_in_delayslot_o <= `InDelaySlot;
+							end else
+								branch_flag_o <= `NotBranch;
+						end
+						`EXE_JNE:begin
+							aluop_o <= `EXE_JNE_OP;
+							instvalid <= `InstValid;
+							wreg_o <= `WriteDisable;
+							reg1_addr_o <= inst_i[51:47];
+							reg2_addr_o <= inst_i[46:42];
+							reg3_addr_o <= inst_i[41:37];
+							reg3_read_o <= 1'b1;
+							reg2_read_o <= 1'b1;
+							temp <= {1'b0,reg1_o} + (~{1'b0,reg2_o}) + 1;
+
+							if (temp != 0) begin
+								branch_flag_o <= `Branch;
+								target_addr_o <= reg3_o;
+								next_inst_in_delayslot_o <= `InDelaySlot;
+							end else
+								branch_flag_o <= `NotBranch;
+						end
+						`EXE_CALL:begin
+							aluop_o <= `EXE_CALL_OP;
+							alusel_o <= `EXE_RES_CALL;
+							instvalid <= `InstValid;
+							imm <= pc_i + 8;
+							wd_o <= 5'd29;
+							reg2_read_o <=1'b0;
+							wreg_o <= `WriteEnable;
+							branch_flag_o <= `Branch;
+							reg1_addr_o <= inst_i[51:47];
+							target_addr_o <= reg1_o;
+							next_inst_in_delayslot_o <= `InDelaySlot;
+						end
+						`EXE_LOOP:begin
+							aluop_o <= `EXE_LOOP_OP;
+							alusel_o <= `EXE_RES_LOOP;
+							wreg_o <= `WriteEnable;
+							wd_o <= 5'd28;
+							reg2_addr_o <= 5'd28;
+							//reg2_read_o <= 1'b1;
+							reg1_addr_o <= inst_i[51:47];
+							if (reg2_o != 0) begin
+								branch_flag_o <= `Branch;
+								target_addr_o <= reg1_o;
+								next_inst_in_delayslot_o <= `NotInDelaySlot;
+							end else
+								branch_flag_o <= `NotBranch;
+						end
 						default:begin
 						end
 					endcase
@@ -316,7 +651,9 @@ module id(
 		end       //if
 	end         //always
 	
-
+	always @(*) begin
+		id_is_delayslot_o <= is_delayslot_i;
+	end
 	always @ (*) begin
 		if(rst == `RstEnable)
 			reg1_o <= `ZeroWord;
@@ -375,4 +712,32 @@ module id(
 			reg2_o <= `ZeroWord;
 		end
 
+	always @ (*) begin
+		if(rst == `RstEnable)
+			reg3_o <= `ZeroWord;
+		else if ((reg3_read_o == 1'b1) && (ex_wreg_i == 1'b1)
+					&& (ex_wd_i == reg3_addr_o))
+			reg3_o <= ex_wdata_i;
+		else if ((reg3_read_o == 1'b1) && (mem_wreg_i == 1'b1)
+					&& (mem_wd_i == reg3_addr_o))
+			reg3_o <= mem_wdata_i;
+		else if ((reg3_read_o == 1'b1) && (ex_we == 1'b1)
+					&& (reg3_addr_o == 30))
+			reg3_o <= ex_lo_i;
+		else if ((reg3_read_o == 1'b1) && (ex_we == 1'b1)
+					&& (reg3_addr_o == 31))
+			reg3_o <= ex_hi_i;
+		else if ((reg3_read_o == 1'b1) && (mem_we == 1'b1)
+					&& (reg3_addr_o == 30))
+			reg3_o <= mem_lo_i;
+		else if ((reg3_read_o == 1'b1) && (mem_we == 1'b1)
+					&& (reg3_addr_o == 31))
+			reg3_o <= mem_hi_i;
+		else if(reg3_read_o == 1'b1)
+			reg3_o <= reg3_data_i;
+		else if(reg3_read_o == 1'b0)
+			reg3_o <= imm;
+		else
+			reg3_o <= `ZeroWord;
+		end
 endmodule

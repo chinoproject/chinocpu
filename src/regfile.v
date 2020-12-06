@@ -20,6 +20,11 @@ module regfile(
 	input wire[`RegAddrBus]			  				raddr2,
 	output reg[`RegBus]           					rdata2,
 
+	//读端口3
+	input wire										re3,
+	input wire[`RegAddrBus]			  				raddr3,
+	output reg[`RegBus]           					rdata3,
+
 	input wire[`RegBus]								hi,
 	input wire[`RegBus]								lo,
 	input wire										mul_we,
@@ -77,4 +82,18 @@ module regfile(
 	  end
 	end
 
+	always @(*) begin
+		if(rst == `RstEnable) begin
+			  rdata3 <= `ZeroWord;
+	  end else if(raddr3 == `RegNumLog2'h0) begin
+	  		rdata3 <= `ZeroWord;
+	  end else if((raddr3 == waddr) && (we == `WriteEnable) 
+	  	            && (re3 == `ReadEnable)) begin
+	  	  rdata3 <= wdata;
+	  end else if(re2 == `ReadEnable) begin
+	      rdata3 <= regs[raddr3];
+	  end else begin
+	      rdata3 <= `ZeroWord;
+	  end
+	end
 endmodule

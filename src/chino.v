@@ -55,11 +55,14 @@ module chino(
 	//连接译码阶段ID模块与通用寄存器Regfile模块
 	wire reg1_read;
 	wire reg2_read;
+	wire reg3_read;
 	wire[`RegBus] reg1_data;
 	wire[`RegBus] reg2_data;
+	wire[`RegBus] reg3_data;
 	wire[`RegAddrBus] reg1_addr;
 	wire[`RegAddrBus] reg2_addr;
-  
+	wire[`RegAddrBus] reg3_addr;
+
 	//连接EX和EX/MEM阶段的变量，三个变量储存乘除法运算的结果
 	wire[`RegBus]	ex_hi_o;
 	wire[`RegBus]	ex_lo_o;
@@ -99,6 +102,16 @@ module chino(
 	wire 			req_from_id;
 	wire 			req_from_ex;
 
+	//pc跳转变量
+	wire 			branch_flag_o;
+	wire[`RegBus]	target_addr_o;
+	
+	//延迟槽
+	wire			ex_is_in_delayslot_o;
+	wire 			is_delayslot_o;
+	wire 			next_inst_in_delayslot_i;
+	wire 			is_delayslot_i;
+	wire 			id_is_delayslot;
 	//CTRL模块例化
 	ctrl u_ctrl(
 		.rst(rst),
@@ -113,7 +126,9 @@ module chino(
 		.rst(rst),
 		.pc(pc),
 		.ce(rom_ce_o),
-		.stall(stall)
+		.stall(stall),
+		.branch_flag_i(branch_flag_o),
+		.target_addr_i(target_addr_o)
 	);
 
   assign rom_addr_o = pc;
@@ -155,7 +170,7 @@ module chino(
 		//mem阶段送来的信息
 		.mem_wdata_i(mem_wdata_o),
 		.mem_wd_i(mem_wd_o),
-		.mem_wreg_i(ex_wreg_o),
+		.mem_wreg_i(mem_wreg_o),
 
 		//ex阶段送来的信息
 		.ex_wdata_i(ex_wdata_o),
@@ -167,7 +182,22 @@ module chino(
 		.ex_we(ex_we_o),
 		.mem_hi_i(mem_hi_o),
 		.mem_lo_i(mem_lo_o),
-		.mem_we(mem_we_o)
+		.mem_we(mem_we_o),
+
+		//送到PC_REG模块的信息
+		.branch_flag_o(branch_flag_o),
+		.target_addr_o(target_addr_o),
+
+		//从ID/EX模块送来的信息
+		.is_delayslot_i(is_delayslot_i),
+
+		//送到ID/EX模块的信息
+		.is_delayslot_o(is_delayslot_o),
+		.next_inst_in_delayslot_o(next_inst_in_delayslot_o),
+		.id_is_delayslot_o(id_is_delayslot),
+		.reg3_read_o(reg3_read),
+		.reg3_addr_o(reg3_addr),
+		.reg3_data_i(reg3_data)
 	);
 
   //通用寄存器Regfile例化
@@ -183,6 +213,9 @@ module chino(
 		.re2 (reg2_read),
 		.raddr2 (reg2_addr),
 		.rdata2 (reg2_data),
+		.re3(reg3_read),
+		.raddr3(reg3_addr),
+		.rdata3(reg3_data),
 
 		.hi(wb_hi_i),
 		.lo(wb_lo_i),
@@ -195,7 +228,7 @@ module chino(
 		.clk(clk),
 		.rst(rst),
 		
-		//从译码阶段ID模块传�?�的信息
+		//从译码阶段ID模块传来的信息
 		.id_aluop(id_aluop_o),
 		.id_alusel(id_alusel_o),
 		.id_reg1(id_reg1_o),
@@ -210,7 +243,17 @@ module chino(
 		.ex_reg2(ex_reg2_i),
 		.ex_wd(ex_wd_i),
 		.ex_wreg(ex_wreg_i),
-		.stall(stall)
+		.stall(stall),
+
+		//从译码阶段ID模块传来的信息
+		.next_inst_in_delayslot_i(next_inst_in_delayslot_o),
+
+		//传到译码阶段ID模块的信息
+		.is_delayslot_o(is_delayslot_i),
+
+		//传到执行阶段EX模块的信息
+		.ex_is_in_delayslot_o(ex_is_in_delayslot_o),
+		.id_is_delayslot_i(id_is_delayslot)
 	);		
 
 	//串行除法器例化
@@ -262,7 +305,10 @@ module chino(
 		.div_start_o(div_start_i),
 		.div_op1(div_opdata1_i),
 		.div_op2(div_opdata2_i),
-		.div_annul_i(div_annul_i)
+		.div_annul_i(div_annul_i),
+
+		//从ID/EX模块传来的信息
+		.ex_is_in_delayslot(ex_is_in_delayslot_o)
 	);
 
   //EX/MEM模块
