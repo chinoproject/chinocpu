@@ -369,10 +369,10 @@ module id(
 							reg2_addr_o <= 5'd28;
 							reg2_read_o <= 1'b1;
 
-							if (reg1_o != 0) begin
+							if (reg1_o != 1) begin
 								branch_flag_o <= `Branch;
 								target_addr_o <= inst_i[51:20];
-								next_inst_in_delayslot_o <= `NotInDelaySlot;
+								next_inst_in_delayslot_o <= `InDelaySlot;
 							end else
 								branch_flag_o <= `NotBranch;
 						end
@@ -634,10 +634,10 @@ module id(
 							reg2_addr_o <= 5'd28;
 							//reg2_read_o <= 1'b1;
 							reg1_addr_o <= inst_i[51:47];
-							if (reg2_o != 0) begin
+							if (reg2_o != 1 ) begin
 								branch_flag_o <= `Branch;
 								target_addr_o <= reg1_o;
-								next_inst_in_delayslot_o <= `NotInDelaySlot;
+								next_inst_in_delayslot_o <= `InDelaySlot;
 							end else
 								branch_flag_o <= `NotBranch;
 						end
