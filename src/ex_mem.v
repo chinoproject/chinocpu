@@ -19,6 +19,10 @@ module ex_mem(
 	input wire[`RegBus]									ex_flags,
 
 	input wire[5:0]										stall,
+
+	input wire[`RegBus]									ex_addr,
+	input wire[`RegBus]									ex_reg2,
+	input wire[`AluOpBus]								ex_aluop,
 	//送到访存阶段的信息
 	output reg[`RegAddrBus]      						mem_wd,
 	output reg                   						mem_wreg,
@@ -27,8 +31,10 @@ module ex_mem(
 	output reg[`RegBus]									mem_hi,
 	output reg[`RegBus]									mem_lo,
 	output reg											mem_we,
-	output reg[`RegBus]									mem_flags
-
+	output reg[`RegBus]									mem_flags,
+	output reg[`RegBus]									mem_addr,
+	output reg[`RegBus]									mem_reg2,
+	output reg[`AluOpBus]								mem_aluop
 );
 
 
@@ -49,6 +55,9 @@ module ex_mem(
 			mem_lo <= `ZeroWord;
 			mem_we <= `WriteDisable;
 			mem_flags <= `ZeroWord;
+			mem_addr <= `ZeroWord;
+			mem_reg2 <= `ZeroWord;
+			mem_aluop <= 8'h0;
 		end else if (stall[3] == `NoStop) begin
 			mem_wd <= ex_wd;
 			mem_wreg <= ex_wreg;
@@ -57,6 +66,9 @@ module ex_mem(
 			mem_lo <= ex_lo;
 			mem_we <= ex_we;	
 			mem_flags <= ex_flags;	
+			mem_addr <= ex_addr;
+			mem_reg2 <= ex_reg2;
+			mem_aluop <= ex_aluop;
 		end    //if
 	end      //always
 			

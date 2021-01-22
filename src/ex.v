@@ -11,6 +11,7 @@ module ex(
 	input wire[`RegBus]           	reg2_i,
 	input wire[`RegAddrBus]       	wd_i,
 	input wire                    	wreg_i,
+	input wire[`RegBus]				offset_i,
 
 	//输出到MEM阶段的信息
 	output reg[`RegAddrBus]       	wd_o,
@@ -36,7 +37,10 @@ module ex(
 	output reg						div_start_o,
 	output reg 						div_annul_i,
 	output reg[`RegBus]				div_op1,
-	output reg[`RegBus]				div_op2
+	output reg[`RegBus]				div_op2,
+	output reg[`RegBus]				ex_addr,
+	output reg[`AluOpBus]			ex_aluop,
+	output reg[`RegBus]				ex_reg2
 );
 
 	reg[`RegBus] 			logicout;
@@ -49,11 +53,24 @@ module ex(
 	wire[`RegBus]			mul_reg1_mux;
 	wire[`DoubleRegBus]		mulres_temp;
 	reg 					div_stallreq;	//除法运算导致流水线暂停
-
+	reg[`AriRegBus]			temp_addr;
 	//减法运算则计算补码
 	assign reg2_i_mux = (aluop_i == `EXE_SUB_OP) ? (~{1'b0,reg2_i}) + 1:{1'b0,reg2_i};
 	assign result_arithmetic = {1'b0,reg1_i} + reg2_i_mux;
-	
+	// 指令地址的计算
+	always @ (*) begin
+		if(rst == `RstEnable) begin
+			temp_addr <= 33'h0;
+		end else begin
+			temp_addr <= reg1_i + offset_i;
+			if (temp_addr[32:32] == 1'b1)	// 地址溢出则回滚地址
+				temp_addr <= temp_addr - 32'hffffffff;
+			ex_addr <= temp_addr[31:0];
+			ex_reg2 <= reg2_i;
+			ex_aluop <= aluop_i;
+		end
+	end
+
 	always @ (*) begin
 		if(rst == `RstEnable) begin
 			logicout <= `ZeroWord;
@@ -235,6 +252,7 @@ module ex(
 			`EXE_RES_CALL:wdata_o <= reg2_i;
 			`EXE_RES_RET:wdata_o <= wdata_o;
 			`EXE_RES_LOOP:wdata_o <= reg2_i - 1;
+			`EXE_RES_LOAD_STORE:wdata_o <= 32'h0;
 		default:wdata_o <= `ZeroWord;
 		endcase
 	end	

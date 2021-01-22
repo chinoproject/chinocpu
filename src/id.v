@@ -56,7 +56,9 @@ module id(
 	output reg 						is_delayslot_o,
 	output reg 						id_is_delayslot_o,
 	//从ID/EX模块传来的信息
-	input wire 						is_delayslot_i
+	input wire 						is_delayslot_i,
+
+	output reg[`RegBus]				offset_o
 );
 
   	wire[3:0]	mem = inst_i[63:60];	//访存类型
@@ -93,7 +95,7 @@ module id(
 			reg2_read_o <= 1'b0;
 			reg1_addr_o <= inst_i[46:42];
 			reg2_addr_o <= inst_i[41:37];
-
+			offset_o <= `ZeroWord;
 			//目前仅有条件跳转指令使用
 			//reg3_addr_o <= inst_i[41:37];		
 			imm <= `ZeroWord;
@@ -363,9 +365,7 @@ module id(
 							alusel_o <= `EXE_RES_LOOP;
 							wreg_o <= `WriteEnable;
 							wd_o <= 5'd28;
-							//imm <= inst_i[51:20];
 							reg1_addr_o <= 5'd28;
-
 							reg2_addr_o <= 5'd28;
 							reg2_read_o <= 1'b1;
 
@@ -375,6 +375,120 @@ module id(
 								next_inst_in_delayslot_o <= `InDelaySlot;
 							end else
 								branch_flag_o <= `NotBranch;
+						end
+						`EXE_LOADB: begin
+							aluop_o <= `EXE_LOADB_OP;
+							alusel_o <= `EXE_RES_LOAD_STORE;
+							wreg_o <= `WriteEnable;
+							instvalid <= `InstValid;
+							wd_o <= inst_i[51:47];
+							offset_o <= inst_i[41:10];						
+						end
+						`EXE_LOADH: begin
+							aluop_o <= `EXE_LOADH_OP;
+							alusel_o <= `EXE_RES_LOAD_STORE;
+							wreg_o <= `WriteEnable;
+							wd_o <= inst_i[51:47];
+							instvalid <= `InstValid;
+							offset_o <= inst_i[41:10];						
+						end
+						`EXE_LOADW: begin
+							aluop_o <= `EXE_LOADW_OP;
+							alusel_o <= `EXE_RES_LOAD_STORE;
+							wreg_o <= `WriteEnable;
+							wd_o <= inst_i[51:47];
+							instvalid <= `InstValid;
+							offset_o <= inst_i[41:10];						
+
+						end 
+						`EXE_LOADBU: begin
+							aluop_o <= `EXE_LOADBU_OP;
+							alusel_o <= `EXE_RES_LOAD_STORE;
+							wreg_o <= `WriteEnable;
+							wd_o <= inst_i[51:47];
+							instvalid <= `InstValid;
+							offset_o <= inst_i[41:10];						
+						end
+						`EXE_LOADHU: begin
+							aluop_o <= `EXE_LOADHU_OP;
+							alusel_o <= `EXE_RES_LOAD_STORE;
+							wreg_o <= `WriteEnable;
+							wd_o <= inst_i[51:47];
+							instvalid <= `InstValid;
+							offset_o <= inst_i[41:10];
+						end
+						`EXE_STOREB: begin
+							aluop_o <= `EXE_STOREB_OP;
+							alusel_o <= `EXE_RES_LOAD_STORE;
+							wreg_o <= `WriteEnable;
+							reg2_addr_o <= inst_i[51:47];
+							reg2_read_o <= 1'b1;
+							reg1_addr_o <= inst_i[46:42];
+							wd_o <= inst_i[46:42];
+							instvalid <= `InstValid;
+							offset_o <= inst_i[41:10];						
+						end
+						`EXE_STOREH: begin
+							aluop_o <= `EXE_STOREH_OP;
+							alusel_o <= `EXE_RES_LOAD_STORE;
+							wreg_o <= `WriteEnable;
+							reg2_addr_o <= inst_i[51:47];
+							reg2_read_o <= 1'b1;
+							reg1_addr_o <= inst_i[46:42];
+							wd_o <= inst_i[46:42];
+							instvalid <= `InstValid;
+							offset_o <= inst_i[41:10];	
+						end
+						`EXE_STOREW: begin
+							aluop_o <= `EXE_STOREW_OP;
+							alusel_o <= `EXE_RES_LOAD_STORE;
+							wreg_o <= `WriteEnable;
+							reg2_addr_o <= inst_i[51:47];
+							reg2_read_o <= 1'b1;
+							reg1_addr_o <= inst_i[46:42];
+							wd_o <= inst_i[46:42];
+							instvalid <= `InstValid;
+							offset_o <= inst_i[41:10];	
+						end
+						`EXE_LOADWL: begin
+							aluop_o <= `EXE_LOADWL_OP;
+							alusel_o <= `EXE_RES_LOAD_STORE;
+							wreg_o <= `WriteEnable;
+							wd_o <= inst_i[51:47];
+							reg2_addr_o <= inst_i[51:47];
+							offset_o <= inst_i[41:10];
+							reg2_read_o <= 1'b1;
+						end
+						`EXE_LOADWR: begin
+							aluop_o <= `EXE_LOADWR_OP;
+							alusel_o <= `EXE_RES_LOAD_STORE;
+							wreg_o <= `WriteEnable;
+							wd_o <= inst_i[51:47];
+							reg2_addr_o <= inst_i[51:47];
+							offset_o <= inst_i[41:10];
+							reg2_read_o <= 1'b1;
+						end
+						`EXE_STOREWL: begin
+							aluop_o <= `EXE_STOREWL_OP;
+							alusel_o <= `EXE_RES_LOAD_STORE;
+							wreg_o <= `WriteEnable;
+							reg2_addr_o <= inst_i[51:47];
+							reg2_read_o <= 1'b1;
+							reg1_addr_o <= inst_i[46:42];
+							wd_o <= inst_i[46:42];
+							instvalid <= `InstValid;
+							offset_o <= inst_i[41:10];	
+						end
+						`EXE_STOREWR: begin
+							aluop_o <= `EXE_STOREWR_OP;
+							alusel_o <= `EXE_RES_LOAD_STORE;
+							wreg_o <= `WriteEnable;
+							reg2_addr_o <= inst_i[51:47];
+							reg2_read_o <= 1'b1;
+							reg1_addr_o <= inst_i[46:42];
+							wd_o <= inst_i[46:42];
+							instvalid <= `InstValid;
+							offset_o <= inst_i[41:10];	
 						end
 						default:begin
 						end

@@ -31,6 +31,7 @@
 `define DivResReady 1'b1
 `define DivStop 1'b0
 `define DivStart 1'b1
+
 //访问类型
 `define MEM_SREG    4'b0010 //读一个寄存器
 `define MEM_DREG    4'b0001 //读两个寄存器
@@ -64,6 +65,18 @@
 `define EXE_CALL    8'b00011000
 `define EXE_RET     8'b00011001
 `define EXE_LOOP    8'b00011010
+`define EXE_LOADB   8'b00011011
+`define EXE_LOADH   8'b00011100
+`define EXE_LOADW   8'b00011101
+`define EXE_LOADBU  8'b00011110
+`define EXE_LOADHU  8'b00011111
+`define EXE_STOREB  8'b00100000
+`define EXE_STOREH  8'b00100001
+`define EXE_STOREW  8'b00100010
+`define EXE_LOADWL  8'b00100011
+`define EXE_LOADWR  8'b00100100
+`define EXE_STOREWL 8'b00100101
+`define EXE_STOREWR 8'b00100110
 
 //AluOp
 `define EXE_NOP_OP      8'b0000_0000
@@ -93,6 +106,18 @@
 `define EXE_CALL_OP     8'b0001_1000
 `define EXE_RET_OP      8'b0001_1001
 `define EXE_LOOP_OP     8'b0001_1010
+`define EXE_LOADB_OP    8'b0001_1011
+`define EXE_LOADH_OP    8'b0001_1100
+`define EXE_LOADW_OP    8'b0001_1101
+`define EXE_LOADBU_OP   8'b0001_1110
+`define EXE_LOADHU_OP   8'b0001_1111
+`define EXE_STOREB_OP   8'b0010_0000
+`define EXE_STOREH_OP   8'b0010_0001
+`define EXE_STOREW_OP   8'b0010_0010
+`define EXE_LOADWL_OP   8'b0010_0011
+`define EXE_LOADWR_OP   8'b0010_0100
+`define EXE_STOREWL_OP  8'b0010_0101
+`define EXE_STOREWR_OP  8'b0010_0110
 
 //AluSel
 `define EXE_RES_NOP                     4'b0000
@@ -106,6 +131,7 @@
 `define EXE_RES_CALL                    4'b1000
 `define EXE_RES_RET                     4'B1001
 `define EXE_RES_LOOP                    4'b1010
+`define EXE_RES_LOAD_STORE              4'b1011
 
 //指令存储器inst_rom
 `define InstAddrBus 31:0
@@ -124,3 +150,10 @@
 `define RegNum 32
 `define RegNumLog2 5
 `define NOPRegAddr 5'b00000
+
+//ram
+`define DataMemNum 131071
+`define ByteWidth 7:0
+`define DataMemNumLog2 17
+`define DataAddrBus 31:0
+`define DataBus 31:0
