@@ -83,21 +83,26 @@ module chino(
     wire[`AluOpBus]	ex_aluop_o;
 
     //连接EX/MEM和MEM阶段的变量
-    wire[`RegBus]	mem_hi_i;
-    wire[`RegBus]	mem_lo_i;
-    wire			mem_we_i;
-    wire[`RegBus]	mem_flags_i;
-    wire[`RegBus]	mem_reg2_i;
-    wire[`RegBus]	mem_addr_i;
+    wire[`RegBus]	  mem_hi_i;
+    wire[`RegBus]	  mem_lo_i;
+    wire			      mem_we_i;
+    wire[`RegBus]	  mem_flags_i;
+    wire[`RegBus]	  mem_reg2_i;
+    wire[`RegBus]	  mem_addr_i;
     wire[`AluOpBus]	mem_aluop_i;
+    wire            llbit_i;
+    wire            wb_llbit_we_i;
+    wire            wb_llbit_value_i;
 
     //连接MEM和WB/MEM阶段的变量
     wire[`RegBus]	mem_hi_o;
     wire[`RegBus]	mem_lo_o;
-    wire			mem_we_o;
+    wire			    mem_we_o;
     wire[`RegBus]	mem_flags_o;
+    wire          mem_llbit_we_o;
+    wire          mem_llbit_value_o;
 
-    //L连接WB/MEM阶段和refile的变量
+    //连接WB/MEM阶段和refile的变量
     wire[`RegBus]	wb_hi_i;
     wire[`RegBus]	wb_lo_i;
     wire 			wb_we_i;
@@ -399,7 +404,15 @@ module chino(
         .mem_we_o(ram_we_o),
         .mem_sel_o(ram_sel_o),
         .mem_data_o(ram_data_o),
-        .mem_ce_o(ram_ce_o)
+        .mem_ce_o(ram_ce_o),
+
+        .llbit_i(llbit_i),
+        //从MEM_WB模块送来的llbit的信息
+        .wb_llbit_value_i(wb_llbit_value_i),
+        .wb_llbit_we_i(wb_llbit_we_i),
+
+        .llbit_we_o(mem_llbit_we_o),
+        .llbit_value_o(mem_llbit_value_o)
     );
 
   //MEM/WB模块
@@ -415,6 +428,8 @@ module chino(
         .mem_lo(mem_lo_o),
         .mem_we(mem_we_o),
         .mem_flags(mem_flags_o),
+        .mem_llbit_we(mem_llbit_we_o),
+        .mem_llbit_value(mem_llbit_value_o),
 
         //送到回写阶段的信息
         .wb_wd(wb_wd_i),
@@ -424,7 +439,16 @@ module chino(
         .wb_lo(wb_lo_i),
         .wb_we(wb_we_i),
         .wb_flags(wb_flags_i),
-        .stall(stall)							       	
+        .stall(stall),
+        .wb_llbit_we(wb_llbit_we_i),
+        .wb_llbit_value(wb_llbit_value_i)		       	
     );
-
+    llbit_reg u_llbit_reg(
+      .clk(clk),
+      .rst(rst),
+      .flush(1'b0),
+      .llbit_i(wb_llbit_value_i),
+      .we(wb_llbit_we_i),
+      .llbit_o(llbit_i)
+    );
 endmodule

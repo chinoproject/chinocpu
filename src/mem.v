@@ -22,6 +22,13 @@ module mem(
 	input wire[`RegBus]								mem_data_i,
 	input wire[`RegBus]								reg2_i,
 
+	input wire 										llbit_i,
+	input wire  									wb_llbit_we_i,
+	input wire  									wb_llbit_value_i,
+
+	output reg  									llbit_we_o,
+	output reg  									llbit_value_o,
+
 	output reg[`RegBus]								mem_data_o,
 	output reg										mem_we_o,
 	output reg[3:0]									mem_sel_o,
@@ -38,6 +45,18 @@ module mem(
 	output reg										we_o,
 	output reg[`RegBus]								flags_o
 );
+	reg llbit;
+
+	always @ (*) begin
+		if (rst == `RstEnable) begin
+			llbit <= 1'b0;
+		end else begin
+			if (wb_llbit_we_i == 1'b1)
+				llbit <= wb_llbit_value_i;
+			else
+				llbit <= llbit_i;
+		end
+	end
 
 	always @ (*) begin
 		if(rst == `RstEnable) begin
@@ -48,6 +67,8 @@ module mem(
 			lo_o <= `ZeroWord;
 			flags_o <= `ZeroWord;
 			we_o <= `WriteDisable;
+			llbit_we_o <= 1'b0;
+			llbit_value_o <= 1'b0;
 		end else begin
 		  	wd_o <= wd_i;
 			wreg_o <= wreg_i;
@@ -56,6 +77,8 @@ module mem(
 			lo_o <= lo_i;
 			we_o <= we_i;
 			flags_o <= flags_i;
+			llbit_we_o <= 1'b0;
+			llbit_value_o <= 1'b0;
 
 			case(aluop_i)
 				`EXE_LOADB_OP: begin
@@ -249,6 +272,27 @@ module mem(
 						end
 						default: mem_sel_o <= 4'b0000;
 					endcase
+				end
+				`EXE_LLOAD_OP: begin
+					mem_addr_o <= mem_addr_i;
+					mem_we_o <= `WriteDisable;
+					wdata_o <= mem_data_i;
+					llbit_we_o <= 1'b1;
+					llbit_value_o <= 1'b1;
+					mem_sel_o <= 4'b1111;
+					mem_ce_o <= `ChipEnable;
+				end
+				`EXE_STOREC_OP: begin
+					if (llbit == 1'b1) begin
+						llbit_we_o <= 1'b1;
+						llbit_value_o <= 1'b0;
+						mem_addr_o <= mem_addr_i;
+						mem_we_o <= `WriteEnable;
+						mem_data_o <= reg2_i;
+						wdata_o <= 32'h1;
+						mem_sel_o <= 4'b1111;
+						mem_ce_o <= `ChipEnable;
+					end
 				end
 				default:begin
 					mem_ce_o <= `ChipDisable;

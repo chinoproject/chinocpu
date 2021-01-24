@@ -252,7 +252,7 @@ module ex(
 			`EXE_RES_CALL:wdata_o <= reg2_i;
 			`EXE_RES_RET:wdata_o <= wdata_o;
 			`EXE_RES_LOOP:wdata_o <= reg2_i - 1;
-			`EXE_RES_LOAD_STORE:wdata_o <= 32'h0;
+			//`EXE_RES_LOAD_STORE:wdata_o <= 32'h0;
 		default:wdata_o <= `ZeroWord;
 		endcase
 	end	

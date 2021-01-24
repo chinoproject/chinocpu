@@ -66,12 +66,8 @@ module id(
 
   	reg[`RegBus]	imm;
 	reg 			instvalid;
-	wire[`RegBus] 	inst_n1;
-	wire[`RegBus]	inst_n2;
-	reg[`RegBus]	reg3_o;
 	reg[32:0]		temp;
-	assign inst_n1 = pc_i + 8;
-	assign inst_n2 = pc_i + 16;
+	reg[`RegBus]	reg3_o;
 	//assign temp = reg1_o + {1'b0,~reg2_o}
 	always @ (*) begin	
 		if (rst == `RstEnable) begin
@@ -490,6 +486,25 @@ module id(
 							instvalid <= `InstValid;
 							offset_o <= inst_i[41:10];	
 						end
+						`EXE_LLOAD: begin
+							aluop_o <= `EXE_LLOAD_OP;
+							alusel_o <= `EXE_RES_LOAD_STORE;
+							wreg_o <= `WriteEnable;
+							offset_o <= inst_i[41:10];
+							wd_o <= inst_i[51:47];	
+							instvalid <= `InstValid;
+						end
+						`EXE_STOREC: begin
+							aluop_o <= `EXE_STOREC_OP;
+							alusel_o <= `EXE_RES_LOAD_STORE;
+							wreg_o <= `WriteEnable;
+							reg2_addr_o <= inst_i[51:47];
+							reg2_read_o <= 1'b1;
+							reg1_addr_o <= inst_i[46:42];
+							wd_o <= inst_i[46:42];
+							instvalid <= `InstValid;
+							offset_o <= inst_i[41:10];
+						end
 						default:begin
 						end
 					endcase
@@ -565,13 +580,13 @@ module id(
 							aluop_o <= `EXE_ADD_OP;
 							alusel_o <= `EXE_RES_ARITHMETIC;
 							instvalid <= `InstValid;
-							//wreg_o <= `WriteEnable;
+							wreg_o <= `WriteEnable;
 						end
 						`EXE_SUB:begin
 							aluop_o <= `EXE_SUB_OP;
 							alusel_o <= `EXE_RES_ARITHMETIC;
 							instvalid <= `InstValid;
-							//wreg_o <= `WriteEnable;	
+							wreg_o <= `WriteEnable;	
 						end
 						`EXE_MULT:begin
 							aluop_o <= `EXE_MULT_OP;

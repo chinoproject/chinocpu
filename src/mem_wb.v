@@ -20,6 +20,12 @@ module mem_wb(
 	input wire[5:0]										stall,
 	//flags寄存器
 	input wire[`RegBus]									mem_flags,
+
+	input wire  										mem_llbit_we,
+	input wire  										mem_llbit_value,
+
+	output reg  										wb_llbit_we,
+	output reg  										wb_llbit_value,
 	//送到回写阶段的信息
 	output reg[`RegAddrBus]      						wb_wd,
 	output reg                   						wb_wreg,
@@ -55,6 +61,8 @@ module mem_wb(
 			wb_lo <= mem_lo;
 			wb_we <= mem_we;
 			wb_flags <= mem_flags;
+			wb_llbit_value <= mem_llbit_value;
+			wb_llbit_we <= mem_llbit_we;
 		end    //if
 	end      //always
 endmodule

@@ -77,6 +77,8 @@
 `define EXE_LOADWR  8'b00100100
 `define EXE_STOREWL 8'b00100101
 `define EXE_STOREWR 8'b00100110
+`define EXE_LLOAD   8'b00100111
+`define EXE_STOREC  8'b00101000
 
 //AluOp
 `define EXE_NOP_OP      8'b0000_0000
@@ -118,6 +120,8 @@
 `define EXE_LOADWR_OP   8'b0010_0100
 `define EXE_STOREWL_OP  8'b0010_0101
 `define EXE_STOREWR_OP  8'b0010_0110
+`define EXE_LLOAD_OP    8'b0010_0111
+`define EXE_STOREC_OP   8'b0010_1000
 
 //AluSel
 `define EXE_RES_NOP                     4'b0000
