@@ -219,7 +219,8 @@ module chino(
         .reg3_read_o(reg3_read),
         .reg3_addr_o(reg3_addr),
         .reg3_data_i(reg3_data),
-        .offset_o(id_offset_o)
+        .offset_o(id_offset_o),
+        .ex_aluop_i(ex_aluop_o)
     );
 
   //通用寄存器Regfile例化
@@ -303,7 +304,7 @@ module chino(
         .reg2_i(ex_reg2_i),
         .wd_i(ex_wd_i),
         .wreg_i(ex_wreg_i),
-          .offset_i(ex_offset_i),
+        .offset_i(ex_offset_i),
 
       //EX模块的输出到EX/MEM模块信息
         .wd_o(ex_wd_o),

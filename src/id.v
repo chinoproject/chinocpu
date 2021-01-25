@@ -29,6 +29,7 @@ module id(
 	input wire[`RegBus]				mem_lo_i,
 	input wire						mem_we,
 
+	input wire[`AluOpBus]			ex_aluop_i,
 	//送到regfile的信息
 	output reg                    	reg1_read_o,
 	output reg                    	reg2_read_o, 
@@ -45,7 +46,7 @@ module id(
 	output reg[`RegAddrBus]       	wd_o,
 	output reg                    	wreg_o,
 	//送到CTRL模块的信息
-	output reg    					stallreq,
+	output wire    					stallreq,
 
 	//送到PC_REG模块的信息
 	output reg 						branch_flag_o,
@@ -68,7 +69,10 @@ module id(
 	reg 			instvalid;
 	reg[32:0]		temp;
 	reg[`RegBus]	reg3_o;
-	//assign temp = reg1_o + {1'b0,~reg2_o}
+	reg  			stallreq_for_reg1_loadreload;
+	reg  			stallreq_for_reg2_loadreload;
+	wire  			pre_inst_is_load;
+
 	always @ (*) begin	
 		if (rst == `RstEnable) begin
 			aluop_o <= `EXE_NOP_OP;
@@ -94,8 +98,8 @@ module id(
 			offset_o <= `ZeroWord;
 			//目前仅有条件跳转指令使用
 			//reg3_addr_o <= inst_i[41:37];		
+			//temp <= 33'h0;
 			imm <= `ZeroWord;
-			stallreq <= `NoStop;
 			next_inst_in_delayslot_o <= `NotInDelaySlot;
 			branch_flag_o <= `NotBranch;
 			case (mem)
@@ -120,12 +124,12 @@ module id(
 					reg1_read_o <= 1'b1;
 					reg2_read_o <= 1'b0;
 					imm <= inst_i[41:10];
-					
 					case (op)
 						`EXE_OR:begin	//OR指令
 							aluop_o <= `EXE_OR_OP;
 							alusel_o <= `EXE_RES_LOGIC;
 							instvalid <= `InstValid;
+							wreg_o <= `WriteEnable;
 						end
 						`EXE_AND:begin	//AND指令
 							aluop_o <= `EXE_AND_OP;
@@ -136,6 +140,7 @@ module id(
 							aluop_o <= `EXE_XOR_OP;
 							alusel_o <= `EXE_RES_LOGIC;
 							instvalid <= `InstValid;
+							wreg_o <= `WriteEnable;
 						end
 						`EXE_NOT:begin	//NOT指令
 							aluop_o <= `EXE_NOT_OP;
@@ -143,11 +148,13 @@ module id(
 							instvalid <= `InstValid;
 							imm <= inst_i[46:16];
 							reg1_read_o <= 1'b0;
+							wreg_o <= `WriteEnable;
 						end
 						`EXE_SHL:begin
 							aluop_o <= `EXE_SHL_OP;
 							alusel_o <= `EXE_RES_SHIFT;
 							instvalid <= `InstValid;
+							wreg_o <= `WriteEnable;
 						end
 						`EXE_SHR:begin
 							aluop_o <= `EXE_SHR_OP;
@@ -159,6 +166,7 @@ module id(
 							alusel_o <= `EXE_RES_SHIFT;
 							instvalid <= `InstValid;
 							imm <= {27'h0,inst_i[41:37]};
+							wreg_o <= `WriteEnable;
 						end
 						`EXE_MOV:begin
 							wreg_o <= `WriteEnable;
@@ -779,10 +787,46 @@ module id(
 			endcase
 		end       //if
 	end         //always
-	
+
+	assign pre_inst_is_load = ((ex_aluop_i == `EXE_LOADB_OP) ||
+								(ex_aluop_i == `EXE_LOADH_OP) ||
+								(ex_aluop_i == `EXE_LOADW_OP) ||
+								(ex_aluop_i == `EXE_LOADBU_OP) || 
+								(ex_aluop_i == `EXE_LOADHU_OP) ||
+								(ex_aluop_i == `EXE_LOADWL_OP) ||
+								(ex_aluop_i == `EXE_LOADWR_OP) ||
+								(ex_aluop_i == `EXE_STOREB_OP) ||
+								(ex_aluop_i == `EXE_STOREH_OP) ||
+								(ex_aluop_i == `EXE_STOREW_OP) ||
+								(ex_aluop_i == `EXE_STOREWL_OP) ||
+								(ex_aluop_i == `EXE_STOREWR_OP) ||
+								(ex_aluop_i == `EXE_LLOAD_OP) ||
+								(ex_aluop_i == `EXE_STOREC_OP)) ? 1'b1 : 1'b0;
+	//reg1寄存器存在load相关
+	always @(*) begin
+		stallreq_for_reg1_loadreload <= `NoStop;
+		if (rst == `RstEnable)
+			reg2_o <= `ZeroWord;
+		else if (pre_inst_is_load == 1'b1 && ex_wd_i == reg1_addr_o
+					&& reg1_read_o == 1'b1)
+			stallreq_for_reg1_loadreload <= `Stop;
+	end
+
+	//reg2寄存器存在load相关
+	always @(*) begin
+		stallreq_for_reg2_loadreload <= `NoStop;
+		if (rst == `RstEnable)
+			reg2_o <= `ZeroWord;
+		else if (pre_inst_is_load == 1'b1 && ex_wd_i == reg2_addr_o
+				&& reg2_read_o == 1'b1)
+			stallreq_for_reg2_loadreload <= `Stop;
+	end
+	assign stallreq = stallreq_for_reg1_loadreload | stallreq_for_reg2_loadreload;
+
 	always @(*) begin
 		id_is_delayslot_o <= is_delayslot_i;
 	end
+
 	always @ (*) begin
 		if(rst == `RstEnable)
 			reg1_o <= `ZeroWord;
