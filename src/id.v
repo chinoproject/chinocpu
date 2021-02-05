@@ -162,6 +162,7 @@ module id(
 							aluop_o <= `EXE_SHR_OP;
 							alusel_o <= `EXE_RES_SHIFT;
 							instvalid <= `InstValid;
+							wreg_o <= `WriteEnable;
 						end			 
 						`EXE_SAR:begin
 							aluop_o <= `EXE_SAR_OP;
