@@ -40,7 +40,23 @@ module ex(
 	output reg[`RegBus]				div_op2,
 	output reg[`RegBus]				ex_addr,
 	output reg[`AluOpBus]			ex_aluop,
-	output reg[`RegBus]				ex_reg2
+	output reg[`RegBus]				ex_reg2,
+
+	input wire[`RegBus]				cp0_reg_data_i,
+	output reg[`RegAddrBus]			cp0_reg_raddr_o,
+
+	input wire[`RegAddrBus]			mem_cp0_reg_waddr,
+	input wire[`RegBus]				mem_cp0_reg_data,
+	input wire						mem_cp0_reg_we,
+
+	input wire[`RegAddrBus]			wb_cp0_reg_waddr,
+	input wire[`RegBus]				wb_cp0_reg_data,
+	input wire						wb_cp0_reg_we,
+
+	output reg						cp0_reg_we_o,
+	output reg[`RegAddrBus]			cp0_reg_waddr_o,
+	output reg[`RegBus]				cp0_reg_data_o,
+	input wire[`InstBus]			inst_i
 );
 
 	reg[`RegBus] 			logicout;
@@ -110,6 +126,16 @@ module ex(
 				`EXE_MOV_OP:movout <= reg1_i;
 				`EXE_MOVZ_OP:movout <= reg2_i;
 				`EXE_MOVN_OP:movout <= reg2_i;
+				`EXE_MFC_OP: begin
+					cp0_reg_raddr_o <= inst_i[51:47];
+					movout <= cp0_reg_data_i;
+
+					//解决数据相关
+					if (mem_cp0_reg_we == `WriteEnable && mem_cp0_reg_waddr == inst_i[51:47])
+						movout <= mem_cp0_reg_data;
+					else if (wb_cp0_reg_we == `WriteEnable && wb_cp0_reg_waddr == inst_i[51:47])
+						movout <= wb_cp0_reg_data;
+				end
 				default:begin
 				end
 			endcase
@@ -255,5 +281,21 @@ module ex(
 			//`EXE_RES_LOAD_STORE:wdata_o <= 32'h0;
 		default:wdata_o <= `ZeroWord;
 		endcase
-	end	
+	end
+
+	always @(*) begin
+		if (rst == `RstEnable) begin
+			cp0_reg_data_o <= `ZeroWord;
+			cp0_reg_waddr_o <= 5'b00000;
+			cp0_reg_we_o <= `WriteDisable;
+		end else if (aluop_i == `EXE_MTC_OP) begin
+			cp0_reg_waddr_o <= inst_i[51:47];
+			cp0_reg_we_o <= `WriteEnable;
+			cp0_reg_data_o <= reg1_i;
+		end else begin
+			cp0_reg_data_o <= `ZeroWord;
+			cp0_reg_waddr_o <= 5'b00000;
+			cp0_reg_we_o <= `WriteDisable;
+		end
+	end
 endmodule

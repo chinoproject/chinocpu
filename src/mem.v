@@ -26,6 +26,10 @@ module mem(
 	input wire  									wb_llbit_we_i,
 	input wire  									wb_llbit_value_i,
 
+	input wire  									cp0_reg_we_i,
+	input wire[`RegAddrBus]							cp0_reg_waddr_i,
+	input wire[`RegBus]								cp0_reg_data_i,
+
 	output reg  									llbit_we_o,
 	output reg  									llbit_value_o,
 
@@ -43,7 +47,11 @@ module mem(
 	output reg[`RegBus]								hi_o,
 	output reg[`RegBus]								lo_o,
 	output reg										we_o,
-	output reg[`RegBus]								flags_o
+	output reg[`RegBus]								flags_o,
+
+	output reg  									cp0_reg_we_o,
+	output reg[`RegAddrBus]							cp0_reg_waddr_o,
+	output reg[`RegBus]								cp0_reg_data_o
 );
 	reg llbit;
 
@@ -69,6 +77,9 @@ module mem(
 			we_o <= `WriteDisable;
 			llbit_we_o <= 1'b0;
 			llbit_value_o <= 1'b0;
+			cp0_reg_waddr_o <=5'b00000;
+			cp0_reg_we_o <= `WriteDisable;
+			cp0_reg_data_o <= `ZeroWord;
 		end else begin
 		  	wd_o <= wd_i;
 			wreg_o <= wreg_i;
@@ -79,6 +90,9 @@ module mem(
 			flags_o <= flags_i;
 			llbit_we_o <= 1'b0;
 			llbit_value_o <= 1'b0;
+			cp0_reg_we_o <= cp0_reg_we_i;
+			cp0_reg_waddr_o <= cp0_reg_waddr_i;
+			cp0_reg_data_o <= cp0_reg_data_i;
 
 			case(aluop_i)
 				`EXE_LOADB_OP: begin

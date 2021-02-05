@@ -23,6 +23,11 @@ module ex_mem(
 	input wire[`RegBus]									ex_addr,
 	input wire[`RegBus]									ex_reg2,
 	input wire[`AluOpBus]								ex_aluop,
+	
+	input wire 											ex_cp0_reg_we,
+	input wire[`RegAddrBus]								ex_cp0_reg_waddr,
+	input wire[`RegBus]									ex_cp0_reg_data,
+
 	//送到访存阶段的信息
 	output reg[`RegAddrBus]      						mem_wd,
 	output reg                   						mem_wreg,
@@ -34,7 +39,11 @@ module ex_mem(
 	output reg[`RegBus]									mem_flags,
 	output reg[`RegBus]									mem_addr,
 	output reg[`RegBus]									mem_reg2,
-	output reg[`AluOpBus]								mem_aluop
+	output reg[`AluOpBus]								mem_aluop,
+
+	output reg											mem_cp0_reg_we,
+	output reg[`RegAddrBus]								mem_cp0_reg_waddr,
+	output reg[`RegBus]									mem_cp0_reg_data
 );
 
 
@@ -47,6 +56,9 @@ module ex_mem(
 			mem_lo <= `ZeroWord;
 			mem_we <= `WriteDisable;
 			mem_flags <= `ZeroWord;
+			mem_cp0_reg_waddr <=5'b00000;
+			mem_cp0_reg_we <= `WriteDisable;
+			mem_cp0_reg_data <= `ZeroWord;
 		end else if (stall[3] == `Stop && stall[4] == `NoStop) begin
 			mem_wd <= `NOPRegAddr;
 			mem_wreg <= `WriteDisable;
@@ -58,6 +70,9 @@ module ex_mem(
 			mem_addr <= `ZeroWord;
 			mem_reg2 <= `ZeroWord;
 			mem_aluop <= 8'h0;
+			mem_cp0_reg_waddr <=5'b00000;
+			mem_cp0_reg_we <= `WriteDisable;
+			mem_cp0_reg_data <= `ZeroWord;
 		end else if (stall[3] == `NoStop) begin
 			mem_wd <= ex_wd;
 			mem_wreg <= ex_wreg;
@@ -69,6 +84,9 @@ module ex_mem(
 			mem_addr <= ex_addr;
 			mem_reg2 <= ex_reg2;
 			mem_aluop <= ex_aluop;
+			mem_cp0_reg_data <= ex_cp0_reg_data;
+			mem_cp0_reg_waddr <= ex_cp0_reg_waddr;
+			mem_cp0_reg_we <= ex_cp0_reg_we;
 		end    //if
 	end      //always
 			

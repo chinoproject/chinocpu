@@ -11,16 +11,14 @@ module inst_rom(
 	reg[`InstBus]  inst_mem[0:`InstMemNum-1];
 
 	always @ (*) begin
-inst_mem[0] <= 64'h2080800000040000;
-inst_mem[1] <= 64'h2220800000000000;
-inst_mem[2] <= 64'h2081000000040000;
-inst_mem[3] <= 64'h2080800000000000;
-inst_mem[4] <= 64'h21d0800000000000;
-inst_mem[5] <= 64'h2160880000010000;
-inst_mem[6] <= 64'h2080800000028000;
-inst_mem[7] <= 64'h2080800000000000;
-inst_mem[8] <= 64'h2010840000000800;
-inst_mem[9] <= 64'h2010840000000800;
+inst_mem[0] <= 64'h2080800000078000;
+inst_mem[1] <= 64'h1295840000000000;
+inst_mem[2] <= 64'h2010840004000000;
+inst_mem[3] <= 64'h2010840000100400;
+inst_mem[4] <= 64'h1296040000000000;
+inst_mem[5] <= 64'h12a6080000000000;
+inst_mem[6] <= 64'h2110000003000000;
+
 
 		if (ce == `ChipDisable) begin
 			inst <= `ZeroDoubleWord;

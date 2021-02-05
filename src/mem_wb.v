@@ -24,6 +24,10 @@ module mem_wb(
 	input wire  										mem_llbit_we,
 	input wire  										mem_llbit_value,
 
+	input wire											mem_cp0_reg_we,
+	input wire[`RegAddrBus]								mem_cp0_reg_waddr,
+	input wire[`RegBus]									mem_cp0_reg_data,
+
 	output reg  										wb_llbit_we,
 	output reg  										wb_llbit_value,
 	//送到回写阶段的信息
@@ -34,7 +38,10 @@ module mem_wb(
 	output reg[`RegBus]									wb_hi,
 	output reg[`RegBus]									wb_lo,
 	output reg											wb_we,
-	output reg[`RegBus]									wb_flags
+	output reg[`RegBus]									wb_flags,
+	output reg											wb_cp0_reg_we,
+	output reg[`RegAddrBus]								wb_cp0_reg_waddr,
+	output reg[`RegBus]									wb_cp0_reg_data
 );
 	always @ (posedge clk) begin
 		if(rst == `RstEnable) begin
@@ -45,6 +52,9 @@ module mem_wb(
 			wb_lo <= `ZeroWord;
 			wb_we <= `WriteDisable;
 			wb_flags <= `ZeroWord;	
+			wb_cp0_reg_waddr <=5'b00000;
+			wb_cp0_reg_we <= `WriteDisable;
+			wb_cp0_reg_data <= `ZeroWord;
 		end else if (stall[4] == `Stop && stall[5] == `NoStop) begin
 			wb_wd <= `NOPRegAddr;
 			wb_wreg <= `WriteDisable;
@@ -53,6 +63,9 @@ module mem_wb(
 			wb_lo <= `ZeroWord;
 			wb_we <= `WriteDisable;
 			wb_flags <= `ZeroWord;	
+			wb_cp0_reg_waddr <=5'b00000;
+			wb_cp0_reg_we <= `WriteDisable;
+			wb_cp0_reg_data <= `ZeroWord;
 		end else if (stall[4] == `NoStop) begin
 			wb_wd <= mem_wd;
 			wb_wreg <= mem_wreg;
@@ -63,6 +76,9 @@ module mem_wb(
 			wb_flags <= mem_flags;
 			wb_llbit_value <= mem_llbit_value;
 			wb_llbit_we <= mem_llbit_we;
+			wb_cp0_reg_data <= mem_cp0_reg_data;
+			wb_cp0_reg_waddr <= mem_cp0_reg_waddr;
+			wb_cp0_reg_we <= mem_cp0_reg_we;
 		end    //if
 	end      //always
 endmodule

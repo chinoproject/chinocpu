@@ -59,7 +59,8 @@ module id(
 	//从ID/EX模块传来的信息
 	input wire 						is_delayslot_i,
 
-	output reg[`RegBus]				offset_o
+	output reg[`RegBus]				offset_o,
+	output reg[`InstBus]			inst_o
 );
 
   	wire[3:0]	mem = inst_i[63:60];	//访存类型
@@ -96,6 +97,7 @@ module id(
 			reg1_addr_o <= inst_i[46:42];
 			reg2_addr_o <= inst_i[41:37];
 			offset_o <= `ZeroWord;
+			inst_o <= inst_i;
 			//目前仅有条件跳转指令使用
 			//reg3_addr_o <= inst_i[41:37];		
 			//temp <= 33'h0;
@@ -777,6 +779,20 @@ module id(
 								next_inst_in_delayslot_o <= `InDelaySlot;
 							end else
 								branch_flag_o <= `NotBranch;
+						end
+						`EXE_MTC: begin
+							aluop_o <= `EXE_MTC_OP;
+							alusel_o <= `EXE_RES_MOV;
+							wreg_o <= `WriteDisable;
+							instvalid <= `InstValid;
+							wd_o <= inst_i[51:47];
+						end
+						`EXE_MFC: begin
+							aluop_o <= `EXE_MFC_OP;
+							alusel_o <= `EXE_RES_MOV;
+							wreg_o <= `WriteEnable;
+							wd_o <= inst_i[46:42];
+							instvalid <= `InstValid;
 						end
 						default:begin
 						end

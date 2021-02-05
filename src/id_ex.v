@@ -17,6 +17,7 @@ module id_ex(
 	input wire 						next_inst_in_delayslot_i,
 	input wire 						id_is_delayslot_i,
 	input wire[`RegBus]				id_offset,
+	input wire[`InstBus]			id_inst,
 	//传递到执行阶段的信息
 	output reg[`AluOpBus]         	ex_aluop,
 	output reg[`AluSelBus]        	ex_alusel,
@@ -26,7 +27,8 @@ module id_ex(
 	output reg                    	ex_wreg,
 	output reg						is_delayslot_o,
 	output reg 						ex_is_in_delayslot_o,
-	output reg[`RegBus]				ex_offset
+	output reg[`RegBus]				ex_offset,
+	output reg[`InstBus]			ex_inst
 );
 
 	always @ (posedge clk) begin
@@ -37,6 +39,7 @@ module id_ex(
 			ex_reg2 <= `ZeroWord;
 			ex_wd <= `NOPRegAddr;
 			ex_wreg <= `WriteDisable;
+			ex_inst <= `ZeroDoubleWord;
 		end else if (stall[2] == `Stop && stall[3] == `NoStop) begin
 			ex_aluop <= ex_aluop;
 			ex_alusel <= ex_alusel;
@@ -45,6 +48,7 @@ module id_ex(
 			ex_wd <= `NOPRegAddr;
 			ex_wreg <= `WriteDisable;
 			ex_is_in_delayslot_o <= `NotInDelaySlot;
+			ex_inst <= `ZeroDoubleWord;
 		end else if (stall[2] == `NoStop) begin		
 			ex_aluop <= id_aluop;
 			ex_alusel <= id_alusel;
@@ -55,7 +59,7 @@ module id_ex(
 			ex_offset <= id_offset;	
 			is_delayslot_o <= next_inst_in_delayslot_i;
 			ex_is_in_delayslot_o <= id_is_delayslot_i;
-
+			ex_inst <= id_inst;
 		end
 	end
 	

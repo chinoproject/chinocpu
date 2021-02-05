@@ -35,7 +35,7 @@
 //访问类型
 `define MEM_SREG    4'b0010 //读一个寄存器
 `define MEM_DREG    4'b0001 //读两个寄存器
-`define MEM_ZREG     4'B0100 //不读取寄存器
+`define MEM_ZREG    4'B0100 //不读取寄存器
 
 //指令
 `define EXE_NOP     8'b00000000
@@ -79,6 +79,8 @@
 `define EXE_STOREWR 8'b00100110
 `define EXE_LLOAD   8'b00100111
 `define EXE_STOREC  8'b00101000
+`define EXE_MTC     8'b00101001
+`define EXE_MFC     8'b00101010
 
 //AluOp
 `define EXE_NOP_OP      8'b0000_0000
@@ -122,6 +124,8 @@
 `define EXE_STOREWR_OP  8'b0010_0110
 `define EXE_LLOAD_OP    8'b0010_0111
 `define EXE_STOREC_OP   8'b0010_1000
+`define EXE_MTC_OP      8'b0010_1001
+`define EXE_MFC_OP      8'b0010_1010
 
 //AluSel
 `define EXE_RES_NOP                     4'b0000
@@ -161,3 +165,12 @@
 `define DataMemNumLog2 17
 `define DataAddrBus 31:0
 `define DataBus 31:0
+
+//cp0
+`define CP0_REG_COUNT   5'b01001
+`define CP0_REG_COMPARE 5'b01011
+`define CP0_REG_STATUS  5'b01100
+`define CP0_REG_CAUSE   5'b01101
+`define CP0_REG_EPC     5'b01110
+`define CP0_REG_PrId    5'b01111
+`define CP0_REG_CONFIG  5'b10000
