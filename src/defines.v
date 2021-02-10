@@ -81,6 +81,9 @@
 `define EXE_STOREC  8'b00101000
 `define EXE_MTC     8'b00101001
 `define EXE_MFC     8'b00101010
+`define EXE_TRAP    8'b00101011
+`define EXE_SYSCALL 8'b00101100
+`define EXE_ERET    8'b00101101
 
 //AluOp
 `define EXE_NOP_OP      8'b0000_0000
@@ -126,6 +129,9 @@
 `define EXE_STOREC_OP   8'b0010_1000
 `define EXE_MTC_OP      8'b0010_1001
 `define EXE_MFC_OP      8'b0010_1010
+`define EXE_TRAP_OP     8'b0010_1011
+`define EXE_SYSCALL_OP  8'b0010_1100
+`define EXE_ERET_OP     8'b0010_1101
 
 //AluSel
 `define EXE_RES_NOP                     4'b0000

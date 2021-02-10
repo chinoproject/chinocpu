@@ -27,6 +27,10 @@ module ex_mem(
 	input wire 											ex_cp0_reg_we,
 	input wire[`RegAddrBus]								ex_cp0_reg_waddr,
 	input wire[`RegBus]									ex_cp0_reg_data,
+	input wire[`RegBus]									ex_excepttype,
+	input wire											ex_is_in_delayslot,
+	input wire[`RegBus]									ex_current_inst_address,
+	input wire											flush,
 
 	//送到访存阶段的信息
 	output reg[`RegAddrBus]      						mem_wd,
@@ -43,12 +47,17 @@ module ex_mem(
 
 	output reg											mem_cp0_reg_we,
 	output reg[`RegAddrBus]								mem_cp0_reg_waddr,
-	output reg[`RegBus]									mem_cp0_reg_data
+	output reg[`RegBus]									mem_cp0_reg_data,
+
+	output reg[`RegBus]									mem_excepttype,
+	output reg  										mem_is_in_delayslot,
+	output reg[`RegBus]									mem_current_inst_address
 );
 
 
 	always @ (posedge clk) begin
-		if(rst == `RstEnable) begin
+		if(rst == `RstEnable || flush == 1'b1) begin
+			//复位或者清空流水线
 			mem_wd <= `NOPRegAddr;
 			mem_wreg <= `WriteDisable;
 		  	mem_wdata <= `ZeroWord;
@@ -59,6 +68,9 @@ module ex_mem(
 			mem_cp0_reg_waddr <=5'b00000;
 			mem_cp0_reg_we <= `WriteDisable;
 			mem_cp0_reg_data <= `ZeroWord;
+			mem_excepttype <= `ZeroWord;
+			mem_is_in_delayslot <= `NotInDelaySlot;
+			mem_current_inst_address <= `ZeroWord;
 		end else if (stall[3] == `Stop && stall[4] == `NoStop) begin
 			mem_wd <= `NOPRegAddr;
 			mem_wreg <= `WriteDisable;
@@ -73,6 +85,9 @@ module ex_mem(
 			mem_cp0_reg_waddr <=5'b00000;
 			mem_cp0_reg_we <= `WriteDisable;
 			mem_cp0_reg_data <= `ZeroWord;
+			mem_excepttype <= `ZeroWord;
+			mem_is_in_delayslot <= `NotInDelaySlot;
+			mem_current_inst_address <= `ZeroWord;
 		end else if (stall[3] == `NoStop) begin
 			mem_wd <= ex_wd;
 			mem_wreg <= ex_wreg;
@@ -87,8 +102,9 @@ module ex_mem(
 			mem_cp0_reg_data <= ex_cp0_reg_data;
 			mem_cp0_reg_waddr <= ex_cp0_reg_waddr;
 			mem_cp0_reg_we <= ex_cp0_reg_we;
+			mem_excepttype <= ex_excepttype;
+			mem_is_in_delayslot <= ex_is_in_delayslot;
+			mem_current_inst_address <= ex_current_inst_address;
 		end    //if
 	end      //always
-			
-
 endmodule

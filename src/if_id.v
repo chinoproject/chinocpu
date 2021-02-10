@@ -3,19 +3,24 @@
 
 module if_id(
 
-	input wire										clk,
-	input wire										rst,
-	input wire[5:0]									stall,
+	input wire											clk,
+	input wire											rst,
+	input wire[5:0]										stall,
+	input wire											flush,
 
 	input wire[`InstAddrBus]							if_pc,
-	input wire[`InstBus]          						if_inst,
-	output reg[`InstAddrBus]      						id_pc,
-	output reg[`InstBus]          						id_inst  
+	input wire[`InstBus]								if_inst,
+	output reg[`InstAddrBus]							id_pc,
+	output reg[`InstBus]								id_inst  
 	
 );
 
 	always @ (posedge clk) begin
 		if (rst == `RstEnable) begin
+			id_pc <= `ZeroWord;
+			id_inst <= `ZeroWord;
+		end else if (flush == 1'b1) begin
+			//异常发生，清空流水线
 			id_pc <= `ZeroWord;
 			id_inst <= `ZeroWord;
 		end else if (stall[1] == `Stop && stall[2] == `NoStop) begin

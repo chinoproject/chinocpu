@@ -60,7 +60,9 @@ module id(
 	input wire 						is_delayslot_i,
 
 	output reg[`RegBus]				offset_o,
-	output reg[`InstBus]			inst_o
+	output reg[`InstBus]			inst_o,
+	output wire[`RegBus]			excepttype_o,
+	output wire[`RegBus]			current_inst_address_o
 );
 
   	wire[3:0]	mem = inst_i[63:60];	//访存类型
@@ -73,7 +75,10 @@ module id(
 	reg  			stallreq_for_reg1_loadreload;
 	reg  			stallreq_for_reg2_loadreload;
 	wire  			pre_inst_is_load;
-
+	reg  			excepttype_is_syscall;
+	reg  			excepttype_is_eret;
+	assign excepttype_o = {19'b0,excepttype_is_eret,2'b0,instvalid,excepttype_is_syscall,8'b0};
+	assign current_inst_address_o = pc_i;
 	always @ (*) begin	
 		if (rst == `RstEnable) begin
 			aluop_o <= `EXE_NOP_OP;
@@ -104,6 +109,9 @@ module id(
 			imm <= `ZeroWord;
 			next_inst_in_delayslot_o <= `NotInDelaySlot;
 			branch_flag_o <= `NotBranch;
+			excepttype_is_syscall <= `False_v;
+			excepttype_is_eret <= `False_v;
+
 			case (mem)
 				`MEM_ZREG:begin
 					case(op)
@@ -117,6 +125,29 @@ module id(
 							target_addr_o <= reg1_o;
 							branch_flag_o <= `Branch;
 							next_inst_in_delayslot_o <= `InDelaySlot;
+						end
+						`EXE_TRAP:begin
+							aluop_o <= `EXE_TRAP_OP;
+							alusel_o <= `EXE_RES_NOP;
+							instvalid <= `InstValid;
+							wreg_o <= `WriteDisable;
+							//next_inst_in_delayslot_o <= `InDelaySlot;
+						end
+						`EXE_SYSCALL:begin
+							aluop_o <= `EXE_SYSCALL_OP;
+							alusel_o <= `EXE_RES_NOP;
+							instvalid <= `InstValid;
+							wreg_o <= `WriteDisable;
+							excepttype_is_syscall <= `True_v;
+							//next_inst_in_delayslot_o <= `InDelaySlot;
+						end
+						`EXE_ERET:begin
+							aluop_o <= `EXE_ERET_OP;
+							alusel_o <= `EXE_RES_NOP;
+							instvalid <= `InstValid;
+							wreg_o <= `WriteDisable;
+							excepttype_is_eret <= `True_v;
+							//next_inst_in_delayslot_o <= `InDelaySlot;
 						end
 						default:begin
 						end
@@ -406,7 +437,6 @@ module id(
 							wd_o <= inst_i[51:47];
 							instvalid <= `InstValid;
 							offset_o <= inst_i[41:10];						
-
 						end 
 						`EXE_LOADBU: begin
 							aluop_o <= `EXE_LOADBU_OP;
@@ -800,6 +830,8 @@ module id(
 					endcase
 				end
 				default:begin
+					if (inst_i == `ZeroDoubleWord)
+						instvalid <= `InstValid;
 				end
 			endcase
 		end       //if

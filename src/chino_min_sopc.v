@@ -9,7 +9,8 @@ module chino_min_sopc(
 	wire[`InstAddrBus] inst_addr;
 	wire[`InstBus] inst;
 	wire rom_ce;
- 
+	wire[5:0] int;
+	wire timer_int;
 	//连接数据存储器
 	wire ram_ce;
 	wire ram_we;
@@ -18,6 +19,7 @@ module chino_min_sopc(
 	wire[`DataBus] ram_data_i;
 	wire[`DataBus] ram_data_o;
 
+	assign int = {5'b00000,timer_int};
  	chino u_chino(
 		.clk(clk),
 		.rst(rst),
@@ -31,7 +33,9 @@ module chino_min_sopc(
 		.ram_addr_o(ram_addr),
 		.ram_sel_o(ram_sel),
 		.ram_we_o(ram_we),
-		.ram_ce_o(ram_ce)
+		.ram_ce_o(ram_ce),
+		.timer_int_o(timer_int),
+		.int_i(int)
 	);
 	
 	inst_rom u_inst_rom(

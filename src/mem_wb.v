@@ -28,6 +28,8 @@ module mem_wb(
 	input wire[`RegAddrBus]								mem_cp0_reg_waddr,
 	input wire[`RegBus]									mem_cp0_reg_data,
 
+	input wire  										flush,
+
 	output reg  										wb_llbit_we,
 	output reg  										wb_llbit_value,
 	//送到回写阶段的信息
@@ -44,7 +46,8 @@ module mem_wb(
 	output reg[`RegBus]									wb_cp0_reg_data
 );
 	always @ (posedge clk) begin
-		if(rst == `RstEnable) begin
+		if(rst == `RstEnable || flush == 1'b1) begin
+			//复位或者清空流水线
 			wb_wd <= `NOPRegAddr;
 			wb_wreg <= `WriteDisable;
 		  	wb_wdata <= `ZeroWord;

@@ -56,7 +56,14 @@ module ex(
 	output reg						cp0_reg_we_o,
 	output reg[`RegAddrBus]			cp0_reg_waddr_o,
 	output reg[`RegBus]				cp0_reg_data_o,
-	input wire[`InstBus]			inst_i
+	input wire[`InstBus]			inst_i,
+
+	input wire[`RegBus]  			excepttype_i,
+	input wire[`RegBus]				current_inst_address_i,
+
+	output wire[`RegBus]			excepttype_o,
+	output wire						is_in_delayslot_o,
+	output wire[`RegBus]			current_inst_address_o
 );
 
 	reg[`RegBus] 			logicout;
@@ -70,6 +77,23 @@ module ex(
 	wire[`DoubleRegBus]		mulres_temp;
 	reg 					div_stallreq;	//除法运算导致流水线暂停
 	reg[`AriRegBus]			temp_addr;
+	reg  					trapassert;
+	
+	assign excepttype_o = {excepttype_i[31:12],1'b0,trapassert,excepttype_i[9:8],8'h00};
+	assign is_in_delayslot_o = ex_is_in_delayslot;
+	assign current_inst_address_o = current_inst_address_i;
+
+	//trap指令
+	always @(*) begin
+		if (rst == `RstEnable) begin
+			trapassert <= `TrapAssert;
+		end else begin
+			if (aluop_i == `EXE_TRAP_OP)
+				trapassert <= `TrapAssert;
+			else
+				trapassert <= `TrapNotAssert;
+		end
+	end
 	//减法运算则计算补码
 	assign reg2_i_mux = (aluop_i == `EXE_SUB_OP) ? (~{1'b0,reg2_i}) + 1:{1'b0,reg2_i};
 	assign result_arithmetic = {1'b0,reg1_i} + reg2_i_mux;
@@ -129,12 +153,12 @@ module ex(
 				`EXE_MFC_OP: begin
 					cp0_reg_raddr_o <= inst_i[51:47];
 					movout <= cp0_reg_data_i;
-
 					//解决数据相关
 					if (mem_cp0_reg_we == `WriteEnable && mem_cp0_reg_waddr == inst_i[51:47])
 						movout <= mem_cp0_reg_data;
 					else if (wb_cp0_reg_we == `WriteEnable && wb_cp0_reg_waddr == inst_i[51:47])
 						movout <= wb_cp0_reg_data;
+
 				end
 				default:begin
 				end

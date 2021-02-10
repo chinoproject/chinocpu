@@ -16,7 +16,10 @@ module chino(
     output wire[`RegBus]            ram_addr_o,
     output wire                     ram_we_o,
     output wire[3:0]                ram_sel_o,
-    output wire                     ram_ce_o
+    output wire                     ram_ce_o,
+
+    input wire[5:0]                 int_i,
+    output wire                     timer_int_o
 );
 
     wire[`InstAddrBus] pc;
@@ -32,6 +35,8 @@ module chino(
     wire[`RegAddrBus] id_wd_o;
     wire[`RegBus]     id_offset_o;
     wire[`InstBus]    id_inst_o;
+    wire[`RegBus]     id_excepttype_o;
+    wire[`RegBus]     id_current_inst_address_o;
 
     //连接ID/EX模块的输出与执行阶段EX模块的输入
     wire[`AluOpBus]   ex_aluop_i;
@@ -42,22 +47,35 @@ module chino(
     wire[`RegAddrBus] ex_wd_i;
     wire[`RegBus]     ex_offset_i;
     wire[`InstBus]    ex_inst_i;
+    wire[`RegBus]     ex_excepttype_i;
+    wire[`RegBus]     ex_current_inst_address_i;
 
     //连接执行阶段EX模块的输出与EX/MEM模块的输出
     wire ex_wreg_o;
     wire[`RegAddrBus] ex_wd_o;
     wire[`RegBus] ex_wdata_o;
+    wire[`RegBus] ex_excepttype_o;
+    wire[`RegBus] ex_current_inst_address_o;
+    wire          ex_is_in_delayslot_o_1;
 
     //连接EX/MEM模块的输出与访存阶段MEM模块的输入
     wire mem_wreg_i;
     wire[`RegAddrBus] mem_wd_i;
     wire[`RegBus] mem_wdata_i;
+    wire[`RegBus] mem_excepttype_i;
+    wire[`RegBus] mem_current_inst_address_i;
+    wire          mem_is_in_delayslot_i;
 
     //连接访存阶段MEM模块的输出与MEM/WB模块的输出
     wire mem_wreg_o;
     wire[`RegAddrBus] mem_wd_o;
     wire[`RegBus] mem_wdata_o;
-    
+
+    //连接MEM模块和CP0模块的变量
+    wire[`RegBus] cp0_excepttype_o;
+    wire[`RegBus] cp0_current_inst_address_o;
+    wire[`RegBus] cp0_is_in_delayslot_o;
+
     //连接MEM/WB模块的输出与回写阶段的输入
     wire wb_wreg_i;
     wire[`RegAddrBus] wb_wd_i;
@@ -87,7 +105,7 @@ module chino(
     wire[`RegAddrBus] ex_cp0_reg_waddr_o;
     wire[`RegBus]     ex_cp0_reg_data_o;
     wire[`RegAddrBus] ex_cp0_reg_raddr_o;
-    wire              ex_cp0_reg_data_i;
+    wire[`RegBus]     ex_cp0_reg_data_i;
     //连接EX/MEM和MEM阶段的变量
     wire[`RegBus]	    mem_hi_i;
     wire[`RegBus]	    mem_lo_i;
@@ -104,6 +122,11 @@ module chino(
     wire              wb_llbit_we_i;
     wire              wb_llbit_value_i;
 
+    //连接MEM和CP0的变量
+    wire[`RegBus]     mem_cp0_status_i;
+    wire[`RegBus]     mem_cp0_cause_i;
+    wire[`RegBus]     mem_cp0_epc_i;
+
     //连接MEM和WB/MEM阶段的变量
     wire[`RegBus]	    mem_hi_o;
     wire[`RegBus]	    mem_lo_o;
@@ -114,6 +137,7 @@ module chino(
     wire              mem_cp0_reg_we_o;
     wire[`RegAddrBus] mem_cp0_reg_waddr_o;
     wire[`RegBus]     mem_cp0_reg_data_o;
+    wire[`RegBus]     mem_cp0_epc_o;
 
     //连接WB/MEM阶段和refile的变量
     wire[`RegBus]     wb_hi_i;
@@ -149,12 +173,18 @@ module chino(
     wire 			is_delayslot_i;
     wire 			id_is_delayslot;
 
+    wire          flush;
+    wire[`RegBus] new_pc;
     //CTRL模块例化
     ctrl u_ctrl(
         .rst(rst),
         .req_from_id(req_from_id),
         .req_from_ex(req_from_ex),
-        .stall(stall)
+        .stall(stall),
+        .flush(flush),
+        .new_pc(new_pc),
+        .cp0_epc_i(mem_cp0_epc_o),
+        .excepttype_i(cp0_excepttype_o)
     );
 
   //pc_reg例化
@@ -165,7 +195,9 @@ module chino(
         .ce(rom_ce_o),
         .stall(stall),
         .branch_flag_i(branch_flag_o),
-        .target_addr_i(target_addr_o)
+        .target_addr_i(target_addr_o),
+        .flush(flush),
+        .new_pc(new_pc)
     );
 
   assign rom_addr_o = pc;
@@ -177,7 +209,8 @@ module chino(
         .if_inst(rom_data_i),
         .id_pc(id_pc_i),
         .id_inst(id_inst_i),
-        .stall(stall)    	
+        .stall(stall),
+        .flush(flush)  	
     );
     
     //译码阶段ID模块
@@ -237,30 +270,9 @@ module chino(
         .reg3_data_i(reg3_data),
         .offset_o(id_offset_o),
         .ex_aluop_i(ex_aluop_o),
-        .inst_o(id_inst_o)
-    );
-
-  //通用寄存器Regfile例化
-    regfile u_regfile(
-        .clk (clk),
-        .rst (rst),
-        .we	(wb_wreg_i),
-        .waddr (wb_wd_i),
-        .wdata (wb_wdata_i),
-        .re1 (reg1_read),
-        .raddr1 (reg1_addr),
-        .rdata1 (reg1_data),
-        .re2 (reg2_read),
-        .raddr2 (reg2_addr),
-        .rdata2 (reg2_data),
-        .re3(reg3_read),
-        .raddr3(reg3_addr),
-        .rdata3(reg3_data),
-
-        .hi(wb_hi_i),
-        .lo(wb_lo_i),
-        .mul_we(wb_we_i),
-        .flags_i(wb_flags_i)
+        .inst_o(id_inst_o),
+        .excepttype_o(id_excepttype_o),
+        .current_inst_address_o(id_current_inst_address_o)
     );
 
     //ID/EX模块
@@ -277,6 +289,9 @@ module chino(
         .id_wreg(id_wreg_o),
         .id_offset(id_offset_o),
         .id_inst(id_inst_o),
+        .id_excepttype(id_excepttype_o),
+        .id_current_inst_address(id_current_inst_address_o),
+        .id_flush(flush),
 
         //传到执行阶段EX模块的信息
         .ex_aluop(ex_aluop_i),
@@ -297,21 +312,11 @@ module chino(
         //传到执行阶段EX模块的信息
         .ex_is_in_delayslot_o(ex_is_in_delayslot_o),
         .id_is_delayslot_i(id_is_delayslot),
-        .ex_inst(ex_inst_i)
+        .ex_inst(ex_inst_i),
+        .ex_excepttype(ex_excepttype_i),
+        .ex_current_inst_address(ex_current_inst_address_i)
     );		
 
-    //串行除法器例化
-    serial_div u_serial_div(
-        .clk(clk),
-        .rst(rst),
-        .signed_div_i(div_signed_div_i),
-        .opdata1_i(div_opdata1_i),
-        .opdata2_i(div_opdata2_i),
-        .start_i(div_start_i),
-        .annul_i(div_annul_i),
-        .result_o(div_result_o),
-        .ready_o(div_ready_o)
-    );
     //EX模块
     ex u_ex(
         .rst(rst),
@@ -332,6 +337,8 @@ module chino(
         .wb_cp0_reg_waddr(wb_cp0_waddr_i),
         .wb_cp0_reg_data(wb_cp0_data_i),
         .cp0_reg_data_i(ex_cp0_reg_data_i),
+        .excepttype_i(ex_excepttype_i),
+        .current_inst_address_i(ex_current_inst_address_i),
 
       //EX模块的输出到EX/MEM模块信息
         .wd_o(ex_wd_o),
@@ -369,7 +376,10 @@ module chino(
         .cp0_reg_we_o(ex_cp0_reg_we_o),
         .cp0_reg_waddr_o(ex_cp0_reg_waddr_o),
         .cp0_reg_data_o(ex_cp0_reg_data_o),
-        .cp0_reg_raddr_o(ex_cp0_reg_raddr_o)
+        //.cp0_reg_raddr_o(ex_cp0_reg_raddr_o),
+        .excepttype_o(ex_excepttype_o),
+        .is_in_delayslot_o(ex_is_in_delayslot_o_1),
+        .current_inst_address_o(ex_current_inst_address_o)
     );
 
   //EX/MEM模块例化
@@ -391,6 +401,9 @@ module chino(
         .ex_cp0_reg_we(ex_cp0_reg_we_o),
         .ex_cp0_reg_waddr(ex_cp0_reg_waddr_o),
         .ex_cp0_reg_data(ex_cp0_reg_data_o),
+        .ex_excepttype(ex_excepttype_o),
+        .ex_is_in_delayslot(ex_is_in_delayslot_o_1),
+        .ex_current_inst_address(ex_current_inst_address_o),
 
         //送到访存阶段MEM模块的信息
         .mem_wd(mem_wd_i),
@@ -407,7 +420,11 @@ module chino(
         .mem_aluop(mem_aluop_i),
         .mem_cp0_reg_we(mem_cp0_reg_we_i),
         .mem_cp0_reg_waddr(mem_cp0_reg_waddr_i),
-        .mem_cp0_reg_data(mem_cp0_reg_data_i)
+        .mem_cp0_reg_data(mem_cp0_reg_data_i),
+        .flush(flush),
+        .mem_excepttype(mem_excepttype_i),
+        .mem_is_in_delayslot(mem_is_in_delayslot_i),
+        .mem_current_inst_address(mem_current_inst_address_i)
     );
     
   //MEM模块例化
@@ -428,6 +445,15 @@ module chino(
         .cp0_reg_we_i(mem_cp0_reg_we_i),
         .cp0_reg_waddr_i(mem_cp0_reg_waddr_i),
         .cp0_reg_data_i(mem_cp0_reg_data_i),
+        .wb_cp0_reg_we(wb_cp0_we_i),
+        .wb_cp0_reg_waddr(wb_cp0_waddr_i),
+        .wb_cp0_reg_data(wb_cp0_data_i),
+        .cp0_status_i(mem_cp0_status_i),
+        .cp0_epc_i(mem_cp0_epc_i),
+        .cp0_cause_i(mem_cp0_cause_i),
+        .is_in_delayslot_i(mem_is_in_delayslot_i),
+        .excepttype_i(mem_excepttype_i),
+        .current_inst_address_i(mem_current_inst_address_i),
 
         //送到MEM/WB模块的信息
         .wd_o(mem_wd_o),
@@ -458,7 +484,11 @@ module chino(
 
         .cp0_reg_we_o(mem_cp0_reg_we_o),
         .cp0_reg_waddr_o(mem_cp0_reg_waddr_o),
-        .cp0_reg_data_o(mem_cp0_reg_data_o)
+        .cp0_reg_data_o(mem_cp0_reg_data_o),
+        .excepttype_o(cp0_excepttype_o),
+        .current_inst_address_o(cp0_current_inst_address_o),
+        .is_in_delayslot_o(cp0_is_in_delayslot_o),
+        .cp0_epc_o(mem_cp0_epc_o)
     );
 
   //MEM/WB模块
@@ -493,12 +523,48 @@ module chino(
         .wb_llbit_value(wb_llbit_value_i),
         .wb_cp0_reg_we(wb_cp0_we_i),
         .wb_cp0_reg_waddr(wb_cp0_waddr_i),
-        .wb_cp0_reg_data(wb_cp0_data_i)
+        .wb_cp0_reg_data(wb_cp0_data_i),
+        .flush(flush)
+    );
+
+    //串行除法器例化
+    serial_div u_serial_div(
+        .clk(clk),
+        .rst(rst),
+        .signed_div_i(div_signed_div_i),
+        .opdata1_i(div_opdata1_i),
+        .opdata2_i(div_opdata2_i),
+        .start_i(div_start_i),
+        .annul_i(div_annul_i),
+        .result_o(div_result_o),
+        .ready_o(div_ready_o)
+    );
+  //通用寄存器Regfile例化
+    regfile u_regfile(
+        .clk (clk),
+        .rst (rst),
+        .we	(wb_wreg_i),
+        .waddr (wb_wd_i),
+        .wdata (wb_wdata_i),
+        .re1 (reg1_read),
+        .raddr1 (reg1_addr),
+        .rdata1 (reg1_data),
+        .re2 (reg2_read),
+        .raddr2 (reg2_addr),
+        .rdata2 (reg2_data),
+        .re3(reg3_read),
+        .raddr3(reg3_addr),
+        .rdata3(reg3_data),
+
+        .hi(wb_hi_i),
+        .lo(wb_lo_i),
+        .mul_we(wb_we_i),
+        .flags_i(wb_flags_i)
     );
     llbit_reg u_llbit_reg(
       .clk(clk),
       .rst(rst),
-      .flush(1'b0),
+      .flush(flush),
       .llbit_i(wb_llbit_value_i),
       .we(wb_llbit_we_i),
       .llbit_o(llbit_i)
@@ -509,8 +575,15 @@ module chino(
 
       .data_i(wb_cp0_data_i),
       .data_o(ex_cp0_reg_data_i),
-      .raddr_i(ex_cp0_reg_raddr_o),
+      .raddr_i(ex_cp0_reg_waddr_o),
       .waddr_i(wb_cp0_waddr_i),
-      .we_i(wb_cp0_we_i)
+      .we_i(wb_cp0_we_i),
+      .epc_o(mem_cp0_epc_i),
+      .status_o(mem_cp0_status_i),
+      .cause_o(mem_cp0_cause_i),
+      .excepttype_i(cp0_excepttype_o),
+      .current_inst_address_i(cp0_current_inst_address_o),
+      .is_in_delayslot_i(cp0_is_in_delayslot_o),
+      .timer_int_o(timer_int_o)
     );
 endmodule
