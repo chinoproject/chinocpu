@@ -128,7 +128,7 @@ module cp0_reg(
         end
     end
 
-    always @(posedge clk) begin
+    always @(*) begin
         if (rst == `RstEnable) begin
             data_o <= `ZeroWord;
         end else begin

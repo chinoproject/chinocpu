@@ -376,7 +376,7 @@ module chino(
         .cp0_reg_we_o(ex_cp0_reg_we_o),
         .cp0_reg_waddr_o(ex_cp0_reg_waddr_o),
         .cp0_reg_data_o(ex_cp0_reg_data_o),
-        //.cp0_reg_raddr_o(ex_cp0_reg_raddr_o),
+        .cp0_reg_raddr_o(ex_cp0_reg_raddr_o),
         .excepttype_o(ex_excepttype_o),
         .is_in_delayslot_o(ex_is_in_delayslot_o_1),
         .current_inst_address_o(ex_current_inst_address_o)
@@ -575,7 +575,7 @@ module chino(
 
       .data_i(wb_cp0_data_i),
       .data_o(ex_cp0_reg_data_i),
-      .raddr_i(ex_cp0_reg_waddr_o),
+      .raddr_i(ex_cp0_reg_raddr_o),
       .waddr_i(wb_cp0_waddr_i),
       .we_i(wb_cp0_we_i),
       .epc_o(mem_cp0_epc_i),
@@ -584,6 +584,7 @@ module chino(
       .excepttype_i(cp0_excepttype_o),
       .current_inst_address_i(cp0_current_inst_address_o),
       .is_in_delayslot_i(cp0_is_in_delayslot_o),
-      .timer_int_o(timer_int_o)
+      .timer_int_o(timer_int_o),
+      .int_i(int_i)
     );
 endmodule

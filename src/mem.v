@@ -112,7 +112,7 @@ module mem(
 		end else begin
 			if (current_inst_address_i != `ZeroWord) begin
 				if (((cp0_cause[15:8] & (cp0_status[15:8])) != 8'h00) &&
-					(cp0_status[1] != 1'b0) && (cp0_status[0] == 1'b1))
+					(cp0_status[1] == 1'b0) && (cp0_status[0] == 1'b1))
 					excepttype_o <= 32'h00000001;	//interrept
 				else if (excepttype_i[8] == 1'b1)
 					excepttype_o <= 32'h00000008;	//syscall
@@ -169,7 +169,7 @@ module mem(
 			cp0_reg_we_o <= cp0_reg_we_i;
 			cp0_reg_waddr_o <= cp0_reg_waddr_i;
 			cp0_reg_data_o <= cp0_reg_data_i;
-
+			mem_we <= `WriteDisable;
 			case(aluop_i)
 				`EXE_LOADB_OP: begin
 					mem_addr_o <= mem_addr_i;

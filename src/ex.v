@@ -141,7 +141,7 @@ module ex(
 			endcase
 		end
 	end
-
+	//assign cp0_reg_raddr_o = inst_i[51:47];
 	always @(*) begin
 		if (rst == `RstEnable)
 			movout <= `ZeroWord;
@@ -158,7 +158,6 @@ module ex(
 						movout <= mem_cp0_reg_data;
 					else if (wb_cp0_reg_we == `WriteEnable && wb_cp0_reg_waddr == inst_i[51:47])
 						movout <= wb_cp0_reg_data;
-
 				end
 				default:begin
 				end
