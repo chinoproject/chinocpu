@@ -1,0 +1,1 @@
+sbt "test:runMain and.testMain --target-dir chinocpu/"
