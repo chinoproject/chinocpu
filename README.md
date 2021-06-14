@@ -17,6 +17,7 @@ Here are some ideas to get you started:
 
 ## 目录结构
 docs/&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Chino&nbsp;ISA说明<br>
+old_src/&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Chino&nbsp;CPU&nbsp;Verilog源码<br>
 src/&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Chino&nbsp;CPU源码<br>
 asm_src/&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;测试CPU的汇编文件
 
